@@ -1,0 +1,56 @@
+# AI assistance and review log
+
+This is a working disclosure record, not a substitute for the report appendix or the student's own explanations. Append actual prompts, generated artifacts, reviews and fixes as work proceeds. Do not invent interactions or classify planned tests as executed tests.
+
+## Entry 001 — coursework analysis and planning
+
+- Date: 21 September 2026.
+- Tool: OpenAI Codex assistant in the project workspace, including delegated independent document/design review.
+- User prompt (verbatim):
+
+  > refer this two documents carefully and plan this project prpoerly do the course work, when you planing the project imagine that your web Api expert and best problem slover, after you plan the project ,lets build the project one by one
+
+- Supplied references: coursework brief and marking rubric PDFs at the paths named by the user. A candidate WSO2 REST API design white paper was found in the same module folder and also read.
+- AI aid: local PDF text extraction using Swift/PDFKit; workspace inspection; source cross-checks against official Node.js, Express, PostgreSQL and IETF documentation; independent review of grading gaps and API design risks.
+- Generated artifacts: `README.md`, `docs/PROJECT_PLAN.md`, `docs/REQUIREMENTS.md`, `docs/API_DESIGN.md`, and this log.
+- Scope: planning only. No runtime code, database, deployment, collaborator invitation, signed declaration or assessed report prose produced.
+- Findings: append-only/read-client requirements conflict with full CRUD coverage; the likely white paper differs on processing-resource naming and contains misleading Level 1/idempotency wording; static seeds need explicit freshness handling; daily energy must be derived from counter differences.
+- Design response: record unresolved interpretations, keep reading history immutable, separate scoped analytical collection from device ingestion, specify coverage-aware summaries, and map each marking requirement to future evidence.
+- Verification performed: all pages of both supplied PDFs and the candidate paper read; planning artifacts cross-checked against the rubric. `git diff --check` passed. A document check verified local Markdown links, balanced code fences and 37 unique requirement IDs. No application tests exist or were run.
+- Independent design review repairs: clarified that district users may see minimal ancestor identity metadata for hierarchy navigation, and labeled incomplete current-power aggregation as a subtotal with an explicit coverage flag.
+- Student review and understanding: pending. These notes must be discussed and understood before their decisions are claimed as part of the submitted work.
+
+## Entry 002 — Stage 1 implementation
+
+- Date: 21 September 2026.
+- Tool: OpenAI Codex assistant, with delegated infrastructure, OpenAPI and test work and independent source review.
+- User prompt (verbatim):
+
+  > lets complte this
+
+- Selected context: “Next is Stage 1: establish the API foundation, database configuration, health endpoints and Swagger.”
+- Scope interpretation: implement Stage 1 with the previously proposed TypeScript/Express/PostgreSQL stack; keep later domain/authentication stages pending.
+- Generated artifacts: application/configuration/database-pool/error middleware; OpenAPI JSON; test suites; package and TypeScript/Vitest configuration; Docker/Compose/CI files; README and updated planning records.
+- Dependency direction: keep `app.ts` independent of process startup and inject the database health dependency; retain a single OpenAPI document for Swagger and contract validation; verify with real PostgreSQL as well as HTTP test doubles.
+- Actual review finding and repair: Zod refinement initially attempted `new URL()` even for malformed input, bypassing the sanitized configuration error. Added `URL.canParse()` before parsing; invalid-input tests pass.
+- Actual test finding and repair: Express automatically returned `304` for health requests with `If-None-Match: *`, despite disabling ETag generation. Two tests failed. Health-only middleware now ignores conditional caching headers, and the OpenAPI/README state that probes always evaluate current health. Business-resource caching remains planned for Stage 6.
+- Other integration repairs: strict TypeScript required safe access to optional `Allow` headers in tests; CI needed the explicit `TEST_DATABASE_URL` used by integration tests.
+- Verified: clean locked install; `npm run check` (typecheck, 81 tests, build); three real PostgreSQL integration tests; built-server HTTP 200 responses for liveness, readiness, Swagger HTML and OpenAPI JSON. Total tests passed: 84. See `docs/evidence/STAGE_1.md`.
+- Environment limits: Docker and PostgreSQL were not preinstalled. A PostgreSQL 18.4 instance was run from a temporary package outside the repository for verification; the application dependency list does not include that helper. Container configuration targets PostgreSQL 17 and has not been executed here. Browser automation failed during connection, so interactive browser rendering was not verified; HTTP documentation checks passed.
+- Subsequent user question: “so what is the next step”. Answer: Stage 2, establishing the six-entity database schema and migrations; finish Stage 1 evidence first.
+- Student explanation checkpoint: distinguish liveness from readiness; trace a request through middleware; explain configuration validation, pooled connections and sanitized errors. Student comprehension is not claimed by the automated checks.
+
+## Subsequent entry template
+
+- Date / tool and model identifier if known:
+- Exact prompt or reference to retained prompt transcript:
+- Relevant files and commit:
+- Generated or changed behavior:
+- What was reviewed against which guideline:
+- Actual defect found (or state that no defect was identified):
+- Repair and why it is correct:
+- Verification commands, actual results and evidence location:
+- Student's explanation/checkpoint:
+- Remaining limitations:
+
+Retain later student prompts and material generation/revision instructions. Export available session transcripts when preparing the appendix so this summary is not mistaken for a complete transcript. Do not include signing keys, access tokens, passwords or unrelated personal information in disclosure records.
