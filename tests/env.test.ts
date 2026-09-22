@@ -87,6 +87,8 @@ describe('environment configuration', () => {
     ['DATABASE_URL', 'postgresql://solar:password@localhost:5432/solar?sslmode=require'],
     ['DATABASE_URL', 'postgresql://solar:password@localhost:5432/solar?ssl=true'],
     ['DATABASE_URL', 'postgresql://solar:password@localhost:5432/solar?sslcert=certificate.pem'],
+    ['DATABASE_URL', 'postgresql://solar:password@localhost:5432/solar?user=owner'],
+    ['DATABASE_URL', 'postgresql://solar:password@localhost:5432/solar?database=another_database'],
     ['DATABASE_SSL', 'yes'],
     ['DATABASE_SSL', '1'],
     ['NODE_ENV', 'staging'],

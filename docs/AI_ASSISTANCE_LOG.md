@@ -40,6 +40,24 @@ This is a working disclosure record, not a substitute for the report appendix or
 - Subsequent user question: “so what is the next step”. Answer: Stage 2, establishing the six-entity database schema and migrations; finish Stage 1 evidence first.
 - Student explanation checkpoint: distinguish liveness from readiness; trace a request through middleware; explain configuration validation, pooled connections and sanitized errors. Student comprehension is not claimed by the automated checks.
 
+## Entry 003 — resume and Stage 2 database implementation
+
+- Date: 22 September 2026.
+- Tool: OpenAI Codex assistant, with separate SQL, integration-test and read-only review tasks delegated to collaborating agents.
+- User prompt (verbatim):
+
+  > you cant start what we have stop yesterday
+
+- Scope interpretation: resume yesterday's work and implement the next unfinished stage (database model). Stage 1 was already committed by the start of this turn as `b33fa54` (“1st step”); the workspace was clean.
+- Generation direction: derive six domain tables from the approved plan; keep readings immutable; add transaction/checksum-based migrations and narrowly scoped runtime permissions; verify on real PostgreSQL using isolated fixtures.
+- Generated artifacts: initial SQL migration; migration/permission helpers and CLI commands; local runtime-role bootstrap; model/migration tests; database guide and updated configuration/planning/evidence.
+- Material review finding: effective table-privilege checks do not detect column-only grants. Added `has_any_column_privilege` checks and a regression that supplies an unauthorized column UPDATE grant and expects provisioning to fail.
+- Additional review repairs: reject connection URL query parameters that can override identity/TLS settings; reject elevated/owner/member runtime roles; select an energy precision with a defensible JavaScript scaled range; document that immutable ancestry is a conservative first-version choice.
+- Actual test correction: PostgreSQL returned SQLSTATE `23001` for a restricted parent deletion, while the initial test expected only `23503`. The test now accepts the documented restriction/FK outcomes and separately confirms the parent row remains. Unknown-parent insert tests still require `23503`. The schema was not weakened to satisfy the test.
+- Verification: `npm run check` passed (95 unit/HTTP tests, typecheck and build); PostgreSQL integration suite passed (65 tests); built migration/grant CLI smoke passed against a separately created temporary database/login. See `docs/evidence/STAGE_2.md`.
+- Limits: Docker/remote CI remain unexecuted; local SQL verification used PostgreSQL 18.4. No full seed data, JWT flows or business endpoints were implemented in this stage. The runtime database role does not replace future API jurisdiction/installation authorization.
+- Student explanation checkpoint: explain the six-table hierarchy, FK restrictions, unique observation key, append-only trigger, migration transaction/ledger and separate database accounts. Student comprehension remains to be confirmed through discussion/viva rehearsal.
+
 ## Subsequent entry template
 
 - Date / tool and model identifier if known:

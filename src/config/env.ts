@@ -3,11 +3,12 @@ import { z } from 'zod';
 const databaseUrl = z.string().url().refine((value) => {
   if (!URL.canParse(value)) return false;
   const url = new URL(value);
-  const tlsOptions = ['ssl', 'sslmode', 'sslcert', 'sslkey', 'sslrootcert'];
   return ['postgres:', 'postgresql:'].includes(url.protocol)
     && url.hostname.length > 0
     && url.pathname.length > 1
-    && !tlsOptions.some((key) => url.searchParams.has(key));
+    // pg URL parameters can override the username/database/TLS configuration.
+    // Keep connection identity explicit and configure TLS separately.
+    && url.search.length === 0;
 });
 
 const environmentSchema = z.object({

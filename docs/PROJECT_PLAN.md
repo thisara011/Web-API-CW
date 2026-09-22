@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026. Status: Stage 1 foundation implemented; remaining domain features are planned. See the README for setup and current verification evidence.
+Prepared: 21 September 2026; updated: 22 September 2026. Status: Stages 1 and 2 implemented and locally verified. Seed data, security and business API features remain planned. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -160,6 +160,8 @@ Choose hosting and validate its container/database requirements during Stage 1; 
 At each stage: build a small working increment, run relevant checks, show an HTTP example or artifact, have the student explain the decision, and preserve the real commit. Do not manufacture historical commits or record tests/defects that did not occur. If Git writes or deployment need environment approval, request it for the concrete action at that time.
 
 Stage 1 implementation note: the application, configuration validation, pool, operational routes, error middleware, OpenAPI, Docker/Compose files and CI workflow now exist. Business routes and authentication are deliberately not advertised as implemented. Docker is unavailable on the current machine, so container execution must be verified later; local PostgreSQL verification can use a separate temporary runtime without changing application dependencies.
+
+Stage 2 implementation note: the six domain tables, foreign keys, role/jurisdiction constraints, unique readings, history indexes and immutable-history triggers are implemented. Migrations use a transaction, advisory lock and checksum ledger. A separate runtime role receives domain reads and reading INSERT only. See [database guide](DATABASE.md) and [verification evidence](evidence/STAGE_2.md). The working local verification used PostgreSQL 18.4; the PostgreSQL 17 container/CI path remains unexecuted on this machine.
 
 ## 7. Verification and evidence strategy
 

@@ -17,6 +17,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node openapi ./openapi
+COPY --chown=node:node db/migrations ./db/migrations
 
 USER node
 EXPOSE 3000

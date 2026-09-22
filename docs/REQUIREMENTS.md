@@ -20,10 +20,10 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 
 | ID | Requirement | Source | Acceptance evidence | Status |
 | --- | --- | --- | --- | --- |
-| M01 | Model hierarchy and User before implementation | B p4; R p2 | ER diagram agrees with migrations and FK tests | Planned |
-| M02 | Meter/inverter identifier is an installation attribute | B p4; R p2 | No separate Device domain entity | Planned |
-| M03 | Readings are an append-only historical entity | B p4; R p2 | Retained history; API/runtime DB reject mutation | Planned |
-| M04 | Reading carries installation, timestamp, kW, cumulative kWh, voltage | B p4 | Schema and OpenAPI validations | Planned |
+| M01 | Model hierarchy and User before implementation | B p4; R p2 | ER diagram agrees with migrations and FK tests | Schema implemented; hierarchy/FK tests pass |
+| M02 | Meter/inverter identifier is an installation attribute | B p4; R p2 | No separate Device domain entity | Implemented on installation; unique meter constraint tested |
+| M03 | Readings are an append-only historical entity | B p4; R p2 | Retained history; API/runtime DB reject mutation | Database triggers/privileges tested; business API pending |
+| M04 | Reading carries installation, timestamp, kW, cumulative kWh, voltage | B p4 | Schema and OpenAPI validations | Schema implemented and tested; business OpenAPI pending |
 | D01 | 9 provinces and 25 districts | B p5 | Seed verifier and authoritative mapping reference | Planned |
 | D02 | At least 20 substations and 200 installations | B p5 | Plan uses 25 substations and 200 installations; FK audit | Planned |
 | D03 | At least a week per installation at a fixed reporting interval | B p5 | Per-installation count/time-span verification and seed manifest | Planned |
@@ -51,8 +51,8 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Planned |
 | O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Foundation served locally; business documentation and public deployment pending |
 | O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Planned |
-| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stage 1 log maintained |
-| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stage 1 findings/repairs recorded; student explanation pending |
+| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–2 log maintained |
+| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–2 findings/repairs recorded; student explanation pending |
 | P01 | Report has six required sections and 2250–2750 words | B p7; R p5 | Student-authored final document and word count | Planned |
 | P02 | Signed declaration plus AI appendix | B pp6–8; R pp5–6 | Actual signed declaration and complete appendix | Planned |
 | P03 | Accurate Level 2 evaluation and Level 3 gap | B pp3,7; R p5 | Concrete deployed resource/method/status examples; honest limitation | Planned |

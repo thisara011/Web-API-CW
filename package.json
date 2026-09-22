@@ -17,7 +17,9 @@
     "test:integration": "node --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
     "check": "npm run typecheck && npm test && npm run build",
     "db:up": "docker compose up -d --wait postgres",
-    "db:stop": "docker compose stop postgres"
+    "db:stop": "docker compose stop postgres",
+    "db:migrate": "tsx --env-file-if-exists=.env src/cli/migrate.ts",
+    "db:grant-runtime": "tsx --env-file-if-exists=.env src/cli/grant-runtime.ts"
   },
   "dependencies": {
     "express": "^5.2.1",

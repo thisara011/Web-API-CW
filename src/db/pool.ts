@@ -16,6 +16,7 @@ export function createDatabase(config: Environment, logger: Logger) {
     statement_timeout: config.DB_CONNECTION_TIMEOUT_MS,
     query_timeout: config.DB_CONNECTION_TIMEOUT_MS,
     application_name: 'slsea-solar-api',
+    options: '-c search_path=solar,pg_catalog -c timezone=UTC',
   });
 
   // An idle-client error must not become an unhandled process event.
