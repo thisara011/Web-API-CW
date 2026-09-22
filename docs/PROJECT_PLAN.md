@@ -163,6 +163,8 @@ Stage 1 implementation note: the application, configuration validation, pool, op
 
 Stage 2 implementation note: the six domain tables, foreign keys, role/jurisdiction constraints, unique readings, history indexes and immutable-history triggers are implemented. Migrations use a transaction, advisory lock and checksum ledger. A separate runtime role receives domain reads and reading INSERT only. See [database guide](DATABASE.md) and [verification evidence](evidence/STAGE_2.md). The working local verification used PostgreSQL 18.4; the PostgreSQL 17 container/CI path remains unexecuted on this machine.
 
+Stage 3 implementation note: a deterministic generator now produces the required 9 provinces, 25 districts, 25 substations, 200 installations and 134,600 readings. It records a seed manifest and refuses to mix itself with unknown existing domain data. The fixed August 2026 historical dataset is intentionally reproducible; a later operational catch-up/demo ingestion process is still needed before public marking so “latest” data is not presented as live.
+
 ## 7. Verification and evidence strategy
 
 - Integration tests use real PostgreSQL to exercise FK consistency, authorization joins, uniqueness and transactional behavior. A small explicit fixture tests edge cases; the full seed separately verifies realistic volumes.

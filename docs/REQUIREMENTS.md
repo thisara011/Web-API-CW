@@ -24,10 +24,10 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | M02 | Meter/inverter identifier is an installation attribute | B p4; R p2 | No separate Device domain entity | Implemented on installation; unique meter constraint tested |
 | M03 | Readings are an append-only historical entity | B p4; R p2 | Retained history; API/runtime DB reject mutation | Database triggers/privileges tested; business API pending |
 | M04 | Reading carries installation, timestamp, kW, cumulative kWh, voltage | B p4 | Schema and OpenAPI validations | Schema implemented and tested; business OpenAPI pending |
-| D01 | 9 provinces and 25 districts | B p5 | Seed verifier and authoritative mapping reference | Planned |
-| D02 | At least 20 substations and 200 installations | B p5 | Plan uses 25 substations and 200 installations; FK audit | Planned |
-| D03 | At least a week per installation at a fixed reporting interval | B p5 | Per-installation count/time-span verification and seed manifest | Planned |
-| D04 | Plausible day/night shape | B p5 | Inspect daytime/nighttime samples and counter progression | Planned |
+| D01 | 9 provinces and 25 districts | B p5 | Seed verifier and authoritative mapping reference | Implemented/verified: 9 and 25 synthetic records |
+| D02 | At least 20 substations and 200 installations | B p5 | Plan uses 25 substations and 200 installations; FK audit | Implemented/verified: 25 and 200 records |
+| D03 | At least a week per installation at a fixed reporting interval | B p5 | Per-installation count/time-span verification and seed manifest | Implemented/verified: 673 readings/site at 15-minute intervals |
+| D04 | Plausible day/night shape | B p5 | Inspect daytime/nighttime samples and counter progression | Implemented/tested; synthetic, not live telemetry |
 | A01 | Atomic and collection hierarchy resources, with appropriate nesting | B p5; R p2 | Scoped HTTP examples and parent mismatch tests | Planned |
 | A02 | Installation composite resource | B p5; R p3 | Overview contains site, hierarchy and most recent reading without full history | Planned |
 | A03 | Last-known-reading derived resource | B pp5–6 | Latest by observation timestamp; handles absent history | Planned |

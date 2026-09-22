@@ -58,6 +58,17 @@ This is a working disclosure record, not a substitute for the report appendix or
 - Limits: Docker/remote CI remain unexecuted; local SQL verification used PostgreSQL 18.4. No full seed data, JWT flows or business endpoints were implemented in this stage. The runtime database role does not replace future API jurisdiction/installation authorization.
 - Student explanation checkpoint: explain the six-table hierarchy, FK restrictions, unique observation key, append-only trigger, migration transaction/ledger and separate database accounts. Student comprehension remains to be confirmed through discussion/viva rehearsal.
 
+## Entry 004 — Stage 3 seed data
+
+- Date: 22 September 2026.
+- User direction: resume where work stopped; after the verified Stage 2 commit, proceed to the planned deterministic seed stage.
+- Generated artifacts: seed metadata migration, pure deterministic dataset generator, transactional seed command, unit/integration seed tests and Stage 3 evidence.
+- Decisions: use all 25 Sri Lankan districts across 9 provinces, one synthetic substation per district and eight synthetic installations per substation. Fix the seed at a documented August 2026 cutoff to ensure repeatable marking data rather than generate time-dependent data.
+- Actual review/repair: initially added only unit-level generator coverage. Added a real PostgreSQL integration test that runs the full 134,600-reading seed twice in an isolated schema, checking that the second run reports no writes and exact counts remain intact.
+- Verified: pure dataset tests passed; complete unit/HTTP/build check passed with 100 tests; PostgreSQL suite passed with 66 tests; built CLI migrated and seeded a dedicated temporary database, then correctly reported `already-seeded` on repeat. The temporary validation database was removed after testing.
+- Limitation: generated analyst hashes are placeholders until Stage 4 creates an actual credential/token flow. The static seed is historical and must not be described as current real-time data; operational catch-up is planned later.
+- Student explanation checkpoint: show why a fixed seed supports repeatable demonstrations, calculate 200 × 673 readings, identify the midnight baseline, and explain why the seed refuses unknown pre-existing data.
+
 ## Subsequent entry template
 
 - Date / tool and model identifier if known:
