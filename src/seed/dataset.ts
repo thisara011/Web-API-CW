@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
+import { passwordHash } from '../auth/passwords.js';
 
-export const GENERATOR_VERSION = 'solar-coursework-v1';
+export const GENERATOR_VERSION = 'solar-coursework-v2';
 export const RANDOM_SEED = 'slsea-coursework-2026-v1';
 // 25 August 2026 at midnight in Asia/Colombo. The inclusive start is exactly
 // seven days before this cutoff, providing 673 15-minute observations/site.
@@ -27,12 +28,24 @@ const hierarchy: ProvinceSource[] = [
   { code: 'SG', name: 'Sabaragamuwa Province', districts: [{ code: 'RAT', name: 'Ratnapura' }, { code: 'KEG', name: 'Kegalle' }] },
 ];
 
+// The fixture credentials are derived once per process. This keeps repeated
+// deterministic-data checks fast while production verification remains scrypt.
+const fixtureHashCache = new Map<string, string>();
+function fixtureHash(password: string, salt: string): string {
+  const key = `${salt}\u0000${password}`;
+  const existing = fixtureHashCache.get(key);
+  if (existing) return existing;
+  const value = passwordHash(password, salt);
+  fixtureHashCache.set(key, value);
+  return value;
+}
+
 export interface ProvinceSeed { id: string; code: string; name: string }
 export interface DistrictSeed { id: string; provinceId: string; code: string; name: string }
 export interface SubstationSeed { id: string; districtId: string; code: string; name: string }
 export interface InstallationSeed {
   id: string; gridSubstationId: string; meterId: string; siteLabel: string;
-  capacityKw: string; commissionedDate: string;
+  capacityKw: string; commissionedDate: string; credentialHash: string;
 }
 export interface ReadingSeed {
   id: string; installationId: string; timestamp: string; powerKw: string;
@@ -106,7 +119,7 @@ export function createSeedDataset(): SeedDataset {
     provinces.push({ id: provinceId, code: source.code, name: source.name });
     users.push({
       id: deterministicUuid(`user:province:${source.code}`), email: `analyst-${source.code.toLowerCase()}@slsea.example`,
-      passwordHash: 'seeded-credential-pending-security-stage', role: 'provincial', provinceId, districtId: null,
+      passwordHash: fixtureHash('Coursework-Demo-Password-2026!', `user:${source.code}`), role: 'provincial', provinceId, districtId: null,
     });
     for (const district of source.districts) {
       const districtId = deterministicUuid(`district:${district.code}`);
@@ -115,7 +128,7 @@ export function createSeedDataset(): SeedDataset {
       substations.push({ id: substationId, districtId, code: `${district.code}-01`, name: `${district.name} Solar Grid Substation` });
       users.push({
         id: deterministicUuid(`user:district:${district.code}`), email: `analyst-${district.code.toLowerCase()}@slsea.example`,
-        passwordHash: 'seeded-credential-pending-security-stage', role: 'district', provinceId: null, districtId,
+        passwordHash: fixtureHash('Coursework-Demo-Password-2026!', `user:${district.code}`), role: 'district', provinceId: null, districtId,
       });
       for (let number = 1; number <= 8; number += 1) {
         const installationKey = `${district.code}-${String(number).padStart(2, '0')}`;
@@ -126,13 +139,14 @@ export function createSeedDataset(): SeedDataset {
           siteLabel: `${district.name} Rooftop Solar ${String(number).padStart(2, '0')}`,
           capacityKw: three(capacity),
           commissionedDate: `202${2 + Math.floor(seededNumber(`${installationKey}:year`) * 4)}-${String(1 + Math.floor(seededNumber(`${installationKey}:month`) * 12)).padStart(2, '0')}-${String(1 + Math.floor(seededNumber(`${installationKey}:day`) * 28)).padStart(2, '0')}`,
+          credentialHash: fixtureHash(`device-SLSEA-${district.code}-${String(number).padStart(3, '0')}`, `device:${district.code}:${number}`),
         });
       }
     }
   }
   users.unshift({
     id: deterministicUuid('user:national'), email: 'analyst-national@slsea.example',
-    passwordHash: 'seeded-credential-pending-security-stage', role: 'national', provinceId: null, districtId: null,
+    passwordHash: fixtureHash('Coursework-Demo-Password-2026!', 'user:national'), role: 'national', provinceId: null, districtId: null,
   });
 
   const readings: ReadingSeed[] = [];

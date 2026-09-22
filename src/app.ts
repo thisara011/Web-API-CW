@@ -7,14 +7,20 @@ import { ApiError } from './http/errors.js';
 import { errorHandler, notFound } from './middleware/errors.js';
 import { readOnlyMethods, requestContext, requireJsonBody, requireJsonResponse } from './middleware/requests.js';
 import { openApiDocument } from './openapi.js';
+import type { Environment } from './config/env.js';
+import { AuthenticationService } from './auth/service.js';
+import { createAuthRouter } from './routes/auth.js';
+import { createHierarchyRouter } from './routes/hierarchy.js';
+import { requireBearer } from './middleware/auth.js';
 
 interface AppDependencies {
   database: DatabaseHealth;
   logger: Logger;
+  config?: Environment;
   isShuttingDown?: () => boolean;
 }
 
-export function createApp({ database, logger, isShuttingDown = () => false }: AppDependencies) {
+export function createApp({ database, logger, config, isShuttingDown = () => false }: AppDependencies) {
   const app = express();
   app.disable('x-powered-by');
   // Health must never return a cached 304; business validators arrive in Stage 6.
@@ -78,6 +84,11 @@ export function createApp({ database, logger, isShuttingDown = () => false }: Ap
       response.json(openApiDocument);
     })
     .all(readOnlyMethods);
+
+  if (config && database.pool) {
+    app.use('/auth', createAuthRouter(new AuthenticationService(database.pool, config)));
+    app.use(requireBearer(config, 'geography:read'), createHierarchyRouter(database.pool));
+  }
 
   app.use(notFound);
   app.use(errorHandler(logger));

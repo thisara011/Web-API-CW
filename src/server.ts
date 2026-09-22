@@ -8,7 +8,7 @@ async function start(): Promise<void> {
   const logger = createLogger(config.LOG_LEVEL);
   const database = createDatabase(config, logger);
   let shuttingDown = false;
-  const app = createApp({ database, logger, isShuttingDown: () => shuttingDown });
+  const app = createApp({ database, logger, config, isShuttingDown: () => shuttingDown });
   const server = app.listen(config.PORT, config.HOST);
   server.requestTimeout = 15_000;
   server.headersTimeout = 10_000;

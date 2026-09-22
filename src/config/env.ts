@@ -22,6 +22,10 @@ const environmentSchema = z.object({
   DB_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(1).max(60_000).default(2000),
   DB_IDLE_TIMEOUT_MS: z.coerce.number().int().min(1).max(600_000).default(30_000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  JWT_SECRET: z.string().min(32).default('local-development-secret-change-before-production'),
+  JWT_ISSUER: z.string().trim().min(1).default('slsea-solar-api'),
+  JWT_AUDIENCE: z.string().trim().min(1).default('slsea-solar-clients'),
+  JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().min(60).max(86_400).default(900),
 });
 
 export type Environment = z.infer<typeof environmentSchema>;

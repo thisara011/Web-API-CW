@@ -4,6 +4,7 @@ import type { Environment } from '../config/env.js';
 
 export interface DatabaseHealth {
   checkConnection(): Promise<void>;
+  pool?: Pool;
 }
 
 export function createDatabase(config: Environment, logger: Logger) {

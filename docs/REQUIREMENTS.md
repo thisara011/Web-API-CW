@@ -44,10 +44,10 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | Q04 | Conditional GET; 304 has empty body | B p6; R p3 | ETag/date tests on atomic, collection, composite and derived responses | Planned |
 | Q05 | District generation summary | B p6; R p3 | Verified power and daily-energy arithmetic, coverage and jurisdiction tests | Planned for First band |
 | E01 | One client-error body contract with code, message and detail | B p6; R p3 | Validation, parser, auth, not-found and method errors use same schema | Foundation implemented/tested; auth and domain errors pending |
-| S01 | Device authenticates as one installation; can only append its readings | B pp3–4,6; R p5 | Wrong installation and analyst-write attempts denied | Planned |
+| S01 | Device authenticates as one installation; can only append its readings | B pp3–4,6; R p5 | Wrong installation and analyst-write attempts denied | Authentication implemented; append endpoint pending Stage 5 |
 | S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Planned |
-| S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Planned |
-| S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Planned |
+| S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Implemented/tested for signed JWTs and scope gates |
+| S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Implemented: scope gate plus jurisdiction SQL predicate |
 | O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Planned |
 | O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Foundation served locally; business documentation and public deployment pending |
 | O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Planned |

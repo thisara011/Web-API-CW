@@ -2,7 +2,7 @@
 
 NB6007CEM Web API Development coursework: a REST API for installation-bound solar reading ingestion and jurisdiction-scoped operational and historical reads.
 
-**Status:** API foundation, database model and deterministic coursework seed implemented with TypeScript, Express 5 and PostgreSQL. JWT authentication and solar business endpoints are later stages.
+**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Reading ingestion and historical analytical endpoints are later stages.
 
 ## Run locally
 
@@ -42,6 +42,8 @@ Open [Swagger UI](http://127.0.0.1:3000/docs/) or [OpenAPI JSON](http://127.0.0.
 The API can serve liveness and documentation while PostgreSQL is offline; readiness correctly remains `503`. Readiness currently checks connectivity, not domain migrations or seed completeness. Later stages will extend that gate.
 
 `npm run db:seed` uses the migration owner and writes one fixed, reproducible historical demonstration dataset: 9 provinces, 25 districts, 25 substations, 200 installations and 134,600 readings from seven inclusive days at 15-minute intervals. It does not seed current live power. Running it again verifies the recorded generator checksum and counts, then exits without changing data. If a database contains domain data but no matching seed manifest, it stops instead of mixing datasets.
+
+For local Swagger demonstration only, seed analysts use their seeded email address and `Coursework-Demo-Password-2026!`; a device uses its meter identifier, such as `SLSEA-COL-001`, and `device-SLSEA-COL-001`. Exchange these credentials at `POST /auth/token`. They are public coursework fixtures and must be replaced before any deployment. Tokens expire after 15 minutes by default. Set a unique `JWT_SECRET` of at least 32 characters before deploying.
 
 ```sh
 curl -i http://127.0.0.1:3000/health/live
@@ -118,4 +120,4 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Continue with **Stage 4: JWT authentication, scopes and hierarchy reads** in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.
+Continue with **Stage 5: immutable reading ingestion and operational reads** in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.

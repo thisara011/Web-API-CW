@@ -69,6 +69,16 @@ This is a working disclosure record, not a substitute for the report appendix or
 - Limitation: generated analyst hashes are placeholders until Stage 4 creates an actual credential/token flow. The static seed is historical and must not be described as current real-time data; operational catch-up is planned later.
 - Student explanation checkpoint: show why a fixed seed supports repeatable demonstrations, calculate 200 × 673 readings, identify the midnight baseline, and explain why the seed refuses unknown pre-existing data.
 
+## Entry 005 — Stage 4 authentication and scoped hierarchy reads
+
+- Date: 22 September 2026.
+- Generated artifacts: scrypt password verifier, `jose` JWT integration, token endpoint, bearer middleware, hierarchy routes, OpenAPI contract and PostgreSQL authorization tests.
+- Decisions: JWTs are HS256 tokens validated for exact issuer, audience, signature and expiry. A scope grants the operation type; the route then applies an independent database predicate for the analyst's national, province or district jurisdiction. This prevents a broad `geography:read` claim from becoming unrestricted data access.
+- Actual review/repair: moved bearer middleware after the public health/OpenAPI routes when review showed an earlier placement would have protected health checks. The seed generator was bumped to v2 so new seed rows have scrypt hashes for demonstration credentials; a v1 manifest refuses to be silently blended with it.
+- Verified: complete unit/type/build check passed with 103 tests. Real PostgreSQL suite passed with 69 tests, including a fresh seeded schema, national and district token flows, cross-province denial, device denial, missing/forged bearer tokens and invalid credentials.
+- Limitation: HS256 needs a unique protected deployment secret. The documented seed passwords are public local demonstration fixtures and must be replaced before public deployment. Device reading writes and token credential-version revocation checks arrive in Stage 5.
+- Student explanation checkpoint: distinguish `geography:read` from jurisdiction attributes, identify why a device token cannot read a hierarchy collection, and trace a forged token to signature verification.
+
 ## Subsequent entry template
 
 - Date / tool and model identifier if known:

@@ -13,7 +13,7 @@ describe('coursework seed dataset', () => {
     expect(dataset.readings).toHaveLength(134_600);
     expect(dataset.users).toHaveLength(35);
     expect(dataset.checksum).toMatch(/^[a-f0-9]{64}$/);
-    expect(GENERATOR_VERSION).toBe('solar-coursework-v1');
+    expect(GENERATOR_VERSION).toBe('solar-coursework-v2');
     expect(RANDOM_SEED).toBe('slsea-coursework-2026-v1');
   });
 
