@@ -37,5 +37,8 @@ export function parseEnv(input: NodeJS.ProcessEnv): Environment {
     const fields = [...new Set(result.error.issues.map((issue) => issue.path.join('.')))];
     throw new Error(`Invalid environment configuration: ${fields.join(', ')}. Check .env.example.`);
   }
+  if (result.data.NODE_ENV === 'production' && (!input.JWT_SECRET || result.data.JWT_SECRET === 'local-development-secret-change-before-production')) {
+    throw new Error('Production requires a private JWT_SECRET; the development signing key is forbidden.');
+  }
   return result.data;
 }

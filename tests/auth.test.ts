@@ -21,12 +21,12 @@ describe('credentials and bearer tokens', () => {
       await expect(verifyToken(token, config)).rejects.toMatchObject({ status: 401 });
     },
   );
-  it('uses a salted scrypt verifier without storing the clear-text password', () => {
+  it('uses a salted scrypt verifier without storing the clear-text password', async () => {
     const stored = passwordHash('a sufficiently long secret', 'unique-test-salt');
     expect(stored).not.toContain('a sufficiently long secret');
-    expect(verifyPassword('a sufficiently long secret', stored)).toBe(true);
-    expect(verifyPassword('wrong password', stored)).toBe(false);
-    expect(verifyPassword('a sufficiently long secret', 'not-a-supported-hash')).toBe(false);
+    expect(await verifyPassword('a sufficiently long secret', stored)).toBe(true);
+    expect(await verifyPassword('wrong password', stored)).toBe(false);
+    expect(await verifyPassword('a sufficiently long secret', 'not-a-supported-hash')).toBe(false);
   });
 
   it('issues a signed, short-lived analyst token that retains jurisdiction claims', async () => {

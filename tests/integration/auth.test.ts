@@ -8,6 +8,10 @@ import { parseEnv } from '../../src/config/env.js';
 import { runMigrations } from '../../src/db/migrations.js';
 import { createSeedDataset, SEED_REFERENCE } from '../../src/seed/dataset.js';
 import { seedDatabase } from '../../src/seed/seed.js';
+import { disableFixtureCredentials, rotateCredential } from '../../src/auth/administration.js';
+import { checkProductionReadiness } from '../../src/db/readiness.js';
+import { AuthenticationService } from '../../src/auth/service.js';
+import { catchUpSyntheticReadings } from '../../src/seed/catch-up.js';
 
 const url = process.env.TEST_DATABASE_URL;
 if (!url) throw new Error('TEST_DATABASE_URL is required for authentication integration tests.');
@@ -75,5 +79,43 @@ describe('JWT authentication and jurisdiction-scoped reads', () => {
     expect(latest.status).toBe(200); expect(latest.body.id).toBe(created.body.id);
     const overview = await request(app).get(`/installations/${installation.id}/overview`).set('Authorization', `Bearer ${analyst.body.accessToken}`);
     expect(overview.status).toBe(200); expect(overview.body.lastKnownReading.id).toBe(created.body.id);
+  });
+
+  it('advances synthetic history through midnight without duplicates, gaps or changes to old rows', async () => {
+    const id = dataset.installations.find((item) => item.meterId === 'SLSEA-COL-002')!.id;
+    const cutoff = Date.parse(SEED_REFERENCE) + 86_400_000;
+    const old = (await applicationPool.query('SELECT * FROM generation_readings WHERE installation_id=$1 ORDER BY timestamp LIMIT 1', [id])).rows;
+    const results = await Promise.all([catchUpSyntheticReadings(applicationPool, [id], cutoff), catchUpSyntheticReadings(applicationPool, [id], cutoff)]);
+    expect(results.map((result) => result.inserted).sort((a, b) => a - b)).toEqual([0, 96]);
+    expect((await applicationPool.query('SELECT * FROM generation_readings WHERE installation_id=$1 ORDER BY timestamp LIMIT 1', [id])).rows).toEqual(old);
+    const audit = await applicationPool.query(`WITH r AS (SELECT timestamp, cumulative_energy_kwh,
+      lag(timestamp) OVER (ORDER BY timestamp) AS previous_time,
+      lag(cumulative_energy_kwh) OVER (ORDER BY timestamp) AS previous_counter
+      FROM generation_readings WHERE installation_id=$1)
+      SELECT count(*)::int AS count, bool_and(previous_time IS NULL OR timestamp-previous_time=interval '15 minutes') AS regular,
+        bool_and(previous_counter IS NULL OR cumulative_energy_kwh>=previous_counter) AS monotonic FROM r`, [id]);
+    expect(audit.rows[0]).toEqual({ count: 769, regular: true, monotonic: true });
+    await expect(catchUpSyntheticReadings(applicationPool, [id], Date.now() + 60_000)).rejects.toThrow('cutoff');
+  });
+
+  it('blocks public production credentials and rotates, revokes and disables fixtures without touching history', async () => {
+    await expect(checkProductionReadiness(applicationPool)).rejects.toThrow('fixture');
+    const production = new AuthenticationService(applicationPool, { ...config, NODE_ENV: 'production' });
+    const input = { principalType: 'analyst' as const, identifier: 'analyst-national@slsea.example', password: 'Coursework-Demo-Password-2026!' };
+    await expect(production.authenticate(input)).rejects.toMatchObject({ status: 401 });
+    const oldLogin = await request(app).post('/auth/token').send(input);
+    const before = await applicationPool.query('SELECT count(*) FROM generation_readings');
+    await expect(rotateCredential(applicationPool, input)).rejects.toThrow('Published');
+    await rotateCredential(applicationPool, { ...input, password: 'private-integration-test-only-password' });
+    expect((await request(app).get('/provinces').auth(oldLogin.body.accessToken, { type: 'bearer' })).status).toBe(401);
+    await expect(production.authenticate({ ...input, password: 'private-integration-test-only-password' })).resolves.toHaveProperty('accessToken');
+    const disabled = await disableFixtureCredentials(applicationPool);
+    expect(disabled).toEqual({ analystsDisabled: 34, installationsDisabled: 200 });
+    await expect(checkProductionReadiness(applicationPool)).resolves.toBeUndefined();
+    expect(await disableFixtureCredentials(applicationPool)).toEqual({ analystsDisabled: 0, installationsDisabled: 0 });
+    const device = { principalType: 'installation' as const, identifier: 'SLSEA-COL-001', password: 'private-device-integration-test-password' };
+    await rotateCredential(applicationPool, device);
+    await expect(production.authenticate(device)).resolves.toHaveProperty('accessToken');
+    expect((await applicationPool.query('SELECT count(*) FROM generation_readings')).rows).toEqual(before.rows);
   });
 });

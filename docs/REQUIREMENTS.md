@@ -1,18 +1,18 @@
 # Requirements and evidence matrix
 
-Status key: **Planned** means not implemented or verified. **Open** means a decision or external input remains unresolved. All page numbers refer to physical pages in the supplied PDFs. B = coursework brief; R = marking rubric.
+Status key: **Verified locally** means repository evidence exists, not that a final mark or public deployment is established. **Planned** means not implemented or verified. **Open** means a decision or external input remains unresolved. All page numbers refer to physical pages in the supplied PDFs. B = coursework brief; R = marking rubric.
 
 ## Marking dimensions
 
 | Dimension | Marks | Evidence to produce | Stages | Status |
 | --- | ---: | --- | --- | --- |
-| Architecture and data model | 15 | Independent conceptual model; five-entity hierarchy plus User; append-only time series; meter attribute; separated read/write responsibilities | 0–3 | Planned |
-| API design | 20 | Atomic/collection/composite/derived resources; scoped noun URIs; correct HTTP methods, statuses, validators and JSON | 4–8 | Planned |
-| Coverage | 15 | Entire required surface; analytical controls; agreed CRUD; working district summary | 4–8 | Planned; CRUD open |
-| Implementation with generated code | 10 | Coherent code; actual review/repair records; prompt and AI-aid disclosure; student explanation | Every stage | Foundation code and review log started |
-| Functionality against seed data | 5 | Every endpoint exercised against valid seed plus deliberate edge cases | 3–10 | Planned |
-| Deployment and operation | 10 | Public HTTPS, live Swagger, incremental history, shared repository | 1, 9–10 | Planned |
-| Security and authentication | 15 | JWT bearer scopes; installation-only writes; jurisdiction reads without leakage; HTTPS; scope/attribute tradeoff explanation | 4–10 | Planned |
+| Architecture and data model | 15 | Independent conceptual model; five-entity hierarchy plus User; append-only time series; meter attribute; separated read/write responsibilities | 0–3 | Verified locally; student explanation pending |
+| API design | 20 | Atomic/collection/composite/derived resources; scoped noun URIs; correct HTTP methods, statuses, validators and JSON | 4–8 | Implemented and verified for the current read/append surface; CRUD remains D1 |
+| Coverage | 15 | Entire required surface; analytical controls; agreed CRUD; working district summary | 4–8 | Read/append/summary coverage verified locally; CRUD open |
+| Implementation with generated code | 10 | Coherent code; actual review/repair records; prompt and AI-aid disclosure; student explanation | Every stage | Implementation, regression tests and review log maintained; student critique pending |
+| Functionality against seed data | 5 | Every endpoint exercised against valid seed plus deliberate edge cases | 3–10 | Seed integration tests and compiled local release rehearsal passed |
+| Deployment and operation | 10 | Public HTTPS, live Swagger, incremental history, shared repository | 1, 9–10 | Deployment files and runbook prepared; public host/sharing unverified |
+| Security and authentication | 15 | JWT bearer scopes; installation-only writes; jurisdiction reads without leakage; HTTPS; scope/attribute tradeoff explanation | 4–10 | Local scope, credential and production checks pass; hosted HTTPS pending |
 | Report quality | 10 | Student-authored justification, Level 2 analysis, evaluation, declaration and disclosure | 10 | Planned |
 | Total | 100 | The viva validates these marks; it is not an extra weighted component | | |
 
@@ -28,17 +28,17 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | D02 | At least 20 substations and 200 installations | B p5 | Plan uses 25 substations and 200 installations; FK audit | Implemented/verified: 25 and 200 records |
 | D03 | At least a week per installation at a fixed reporting interval | B p5 | Per-installation count/time-span verification and seed manifest | Implemented/verified: 673 readings/site at 15-minute intervals |
 | D04 | Plausible day/night shape | B p5 | Inspect daytime/nighttime samples and counter progression | Implemented/tested; synthetic, not live telemetry |
-| A01 | Atomic and collection hierarchy resources, with appropriate nesting | B p5; R p2 | Scoped HTTP examples and parent mismatch tests | Hierarchy implemented; district scope regressions covered; root directories/pagination remain pending |
+| A01 | Atomic and collection hierarchy resources, with appropriate nesting | B p5; R p2 | Scoped HTTP examples and parent mismatch tests | Verified locally: atomic, root/nested directories, scoped filters, pagination and empty-parent behavior |
 | A02 | Installation composite resource | B p5; R p3 | Overview contains site, hierarchy and most recent reading without full history | Implemented/tested: scoped overview, safe hierarchy and nullable latest reading |
 | A03 | Last-known-reading derived resource | B pp5–6 | Latest by observation timestamp; handles absent history | Implemented/tested: event-time ordering, late arrivals and empty-site 404 |
 | A04 | Per-installation readings subcollection and atomic read | B p5 | Historical page and Location target retrieval by authorized analyst | Implemented/tested: nested history page and canonical atomic Location retrieval |
 | A05 | Device ingestion creates a resource using correct method and headers | B p5; R p2 | POST returns 201, Location, JSON and validators | Implemented/tested: 201, JSON, Location, Content-Location, ETag and Last-Modified |
 | A06 | Full CRUD on an appropriate writable resource | B p5; R p3 | Agreed mutable resource; real create/read/update/delete tests | Open: D1 |
-| A07 | Consistent nouns, lowercase/hyphens, plural collections | R p2; B p9 | OpenAPI path audit against model and guideline differences | Planned |
+| A07 | Consistent nouns, lowercase/hyphens, plural collections | R p2; B p9 | OpenAPI path audit against model and guideline differences | Implemented noun/plural paths documented; root-prefix differences remain explicit |
 | A08 | Correct update/idempotency semantics | B p5; R p2 | PUT complete replacement if adopted; explicit partial-update contract; repeat-request checks | Open: D1 |
 | A09 | Deliberate 200, 201, 400, 404, 406 and 412 | B p9; R p2 | Positive and negative integration scenarios | Implemented/tested for current routes including 304/406/412; mutable CRUD remains D1 |
 | A10 | Location, ETag, Last-Modified and Content-Type | B p9; R p2 | Header assertions on applicable responses | Implemented: ETag on current business reads, Last-Modified where tracked; hierarchy directories omit date validators |
-| Q01 | Pagination with total count, next and previous links | B p5; R p3 | First/middle/final/empty page checks; filter-preserving links | Implemented/tested for reading histories: scoped count, stable pages and preserved links |
+| Q01 | Pagination with total count, next and previous links | B p5; R p3 | First/middle/final/empty page checks; filter-preserving links | Implemented/tested for histories and hierarchy directories: scoped count, stable pages and preserved links |
 | Q02 | Filtering by province, district, substation and time | B p5; R p3 | Multi-installation analytical queries with authorized regional filters | Implemented/tested: intersected region/installation filters and half-open time bounds |
 | Q03 | Timestamp sorting ascending and descending | B p5; R p3 | Stable ordering and tie-breaking tests | Implemented/tested: timestamp and UUID tie-breaker in both directions |
 | Q04 | Conditional GET; 304 has empty body | B p6; R p3 | ETag/date tests on atomic, collection, composite and derived responses | Implemented/tested: authorized bodyless 304 across resource types; conservative date policy documented |
@@ -48,11 +48,11 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for hierarchy/readings, history count/link boundaries, summaries and conditional authorization |
 | S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Implemented/tested for signed JWTs and scope gates |
 | S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Implemented: scope gate plus jurisdiction SQL predicate |
-| O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Planned |
+| O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Prepared; compiled local rehearsal passed, public HTTPS pending |
 | O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local OpenAPI documents summaries, history and conditional behavior; public deployment pending |
-| O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Planned |
-| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–6/8 log maintained |
-| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–6/8 decisions/findings recorded; student explanation pending |
+| O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Incremental local history exists; invitation/remote CI confirmation pending |
+| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning, Stages 1–6/8 and completion audit logged |
+| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stage and completion-audit findings/repairs recorded; student explanation pending |
 | P01 | Report has six required sections and 2250–2750 words | B p7; R p5 | Student-authored final document and word count | Planned |
 | P02 | Signed declaration plus AI appendix | B pp6–8; R pp5–6 | Actual signed declaration and complete appendix | Planned |
 | P03 | Accurate Level 2 evaluation and Level 3 gap | B pp3,7; R p5 | Concrete deployed resource/method/status examples; honest limitation | Planned |
@@ -73,3 +73,5 @@ These remain unchecked until actual evidence exists. See brief pp8–9 and rubri
 - [ ] Viva attended; all submitted code and design choices explainable.
 
 No planning artifact, passing local test or target band substitutes for these submission actions.
+
+Local completion evidence: [completion audit](evidence/COMPLETION_AUDIT.md), [sanitized release smoke](evidence/LOCAL_RELEASE_SMOKE.json), [deployment runbook](DEPLOYMENT.md) and [student submission checklist](SUBMISSION_CHECKLIST.md). These do not close A06/A08 or public submission gates.

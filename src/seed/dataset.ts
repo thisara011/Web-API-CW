@@ -83,7 +83,7 @@ function localClock(timestamp: number): { hour: number; minute: number } {
   return { hour: local.getUTCHours(), minute: local.getUTCMinutes() };
 }
 
-function powerAt(timestamp: number, capacityKw: number, installationKey: string): number {
+export function powerAt(timestamp: number, capacityKw: number, installationKey: string): number {
   const { hour, minute } = localClock(timestamp);
   const time = hour + minute / 60;
   if (time < 6 || time > 18) return 0;

@@ -20,7 +20,11 @@
     "db:stop": "docker compose stop postgres",
     "db:migrate": "tsx --env-file-if-exists=.env src/cli/migrate.ts",
     "db:grant-runtime": "tsx --env-file-if-exists=.env src/cli/grant-runtime.ts",
-    "db:seed": "tsx --env-file-if-exists=.env src/cli/seed.ts"
+    "db:seed": "tsx --env-file-if-exists=.env src/cli/seed.ts",
+    "db:credentials": "tsx --env-file-if-exists=.env src/cli/credentials.ts",
+    "smoke": "tsx --env-file-if-exists=.env src/cli/smoke.ts",
+    "demo:reading": "tsx --env-file-if-exists=.env src/cli/demo-reading.ts",
+    "demo:catch-up": "tsx --env-file-if-exists=.env src/cli/catch-up.ts"
   },
   "dependencies": {
     "express": "^5.2.1",

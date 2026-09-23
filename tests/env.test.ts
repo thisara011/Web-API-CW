@@ -25,6 +25,7 @@ describe('environment configuration', () => {
       parseEnv({
         ...validEnvironment,
         NODE_ENV: 'production',
+        JWT_SECRET: 'test-only-private-production-key-at-least-32-chars',
         HOST: '0.0.0.0',
         PORT: '8080',
         DATABASE_SSL: 'false',
@@ -63,10 +64,14 @@ describe('environment configuration', () => {
     'accepts the %s runtime environment',
     (environment) => {
       expect(
-        parseEnv({ ...validEnvironment, NODE_ENV: environment }).NODE_ENV,
+        parseEnv({ ...validEnvironment, NODE_ENV: environment, JWT_SECRET: 'test-private-secret-at-least-thirty-two-characters' }).NODE_ENV,
       ).toBe(environment);
     },
   );
+
+  it.each([undefined, 'local-development-secret-change-before-production'])('rejects a public or missing production signing key', (JWT_SECRET) => {
+    expect(() => parseEnv({ ...validEnvironment, NODE_ENV: 'production', JWT_SECRET })).toThrow('JWT_SECRET');
+  });
 
   it.each(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])(
     'accepts the %s log level',

@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import type { Logger } from 'pino';
 import type { Environment } from '../config/env.js';
+import { checkProductionReadiness } from './readiness.js';
 
 export interface DatabaseHealth {
   checkConnection(): Promise<void>;
@@ -27,6 +28,7 @@ export function createDatabase(config: Environment, logger: Logger) {
     pool,
     async checkConnection(): Promise<void> {
       await pool.query('SELECT 1');
+      if (config.NODE_ENV === 'production') await checkProductionReadiness(pool);
     },
     async close(): Promise<void> {
       await pool.end();

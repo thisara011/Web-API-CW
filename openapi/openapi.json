@@ -98,7 +98,7 @@
           "Health"
         ],
         "summary": "Check database connectivity",
-        "description": "Runs a bounded database connectivity check. Connection details and database errors are never returned. This foundation check does not assert that business tables or seed data exist. Health probes are not cacheable and ignore conditional caching headers so they always report current health.",
+        "description": "Runs a bounded database check. In production this also verifies required table/column access and that published seed credentials are disabled; it does not certify seed completeness or freshness. The compiled production server performs this check before listening. Errors are sanitized. Health probes are not cacheable and ignore conditional caching headers.",
         "responses": {
           "200": {
             "description": "The database is reachable.",
@@ -275,8 +275,21 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           }
-        }
+        },
+        "description": "POST credentials to obtain a short-lived JWT. Limited to 30 exchanges per socket IP per minute and four concurrent exchanges per process. A reverse proxy shares its IP budget; deployment must apply an additional edge limit. OPTIONS advertises POST, OPTIONS; other methods return 405. Responses are no-store."
       }
     },
     "/provinces": {
@@ -310,21 +323,23 @@
             }
           },
           {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "name": "offset",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
             }
           },
           {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "name": "limit",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
             }
           }
         ],
@@ -334,7 +349,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "$ref": "#/components/schemas/ProvincePage"
                 }
               }
             },
@@ -390,9 +405,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized provinces"
       }
     },
     "/provinces/{provinceId}": {
@@ -433,24 +455,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -459,17 +463,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/Province"
                 }
               }
             },
@@ -525,9 +519,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock.",
+        "summary": "Retrieve an authorized province"
       }
     },
     "/provinces/{provinceId}/districts": {
@@ -570,21 +571,32 @@
             }
           },
           {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "name": "province-id",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
             }
           },
           {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "name": "limit",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
             }
           }
         ],
@@ -594,7 +606,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "$ref": "#/components/schemas/DistrictPage"
                 }
               }
             },
@@ -650,9 +662,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized districts"
       }
     },
     "/districts/{districtId}": {
@@ -693,24 +712,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -719,17 +720,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/District"
                 }
               }
             },
@@ -785,9 +776,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock.",
+        "summary": "Retrieve an authorized district"
       }
     },
     "/districts/{districtId}/substations": {
@@ -830,21 +828,41 @@
             }
           },
           {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "name": "province-id",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "district-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
             }
           },
           {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "name": "limit",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
             }
           }
         ],
@@ -854,7 +872,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "$ref": "#/components/schemas/SubstationPage"
                 }
               }
             },
@@ -910,9 +928,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized substations"
       }
     },
     "/substations/{substationId}": {
@@ -953,24 +978,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -979,17 +986,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/Substation"
                 }
               }
             },
@@ -1045,9 +1042,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock.",
+        "summary": "Retrieve an authorized substation"
       }
     },
     "/substations/{substationId}/installations": {
@@ -1090,21 +1094,50 @@
             }
           },
           {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "name": "province-id",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "district-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "substation-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
             }
           },
           {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "name": "limit",
+            "in": "query",
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
             }
           }
         ],
@@ -1114,7 +1147,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "$ref": "#/components/schemas/InstallationPage"
                 }
               }
             },
@@ -1170,9 +1203,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized installations"
       }
     },
     "/installations/{installationId}": {
@@ -1213,24 +1253,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "If-Unmodified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "If-Modified-Since",
-            "in": "header",
-            "required": false,
-            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -1239,17 +1261,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "id"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/Installation"
                 }
               }
             },
@@ -1305,9 +1317,16 @@
           },
           "400": {
             "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
           }
         },
-        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock.",
+        "summary": "Retrieve an authorized installation"
       }
     },
     "/installations/{installationId}/readings": {
@@ -2444,6 +2463,435 @@
           }
         }
       }
+    },
+    "/districts": {
+      "get": {
+        "operationId": "listDistricts",
+        "tags": [
+          "Hierarchy"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "province-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized resource representation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistrictPage"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          }
+        },
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized districts"
+      }
+    },
+    "/substations": {
+      "get": {
+        "operationId": "listSubstations",
+        "tags": [
+          "Hierarchy"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "province-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "district-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized resource representation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubstationPage"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          }
+        },
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized substations"
+      }
+    },
+    "/installations": {
+      "get": {
+        "operationId": "listInstallations",
+        "tags": [
+          "Hierarchy"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "province-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "district-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "substation-id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Exact ancestor UUID, intersected with other filters and analyst jurisdiction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized resource representation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationPage"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          }
+        },
+        "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
+        "summary": "List authorized installations"
+      }
     }
   },
   "components": {
@@ -2577,11 +3025,20 @@
                 "type": "integer",
                 "enum": [
                   40001,
+                  40002,
+                  40101,
+                  40102,
+                  40103,
+                  40301,
                   40401,
                   40501,
                   40601,
+                  40901,
+                  40902,
+                  41201,
                   41301,
                   41501,
+                  42901,
                   50001,
                   50301
                 ],
@@ -2623,11 +3080,15 @@
             ]
           },
           "identifier": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254
           },
           "password": {
             "type": "string",
-            "format": "password"
+            "format": "password",
+            "minLength": 12,
+            "maxLength": 256
           }
         }
       },
@@ -2649,21 +3110,6 @@
           "expiresIn": {
             "type": "integer",
             "minimum": 60
-          }
-        }
-      },
-      "Collection": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true
-            }
           }
         }
       },
@@ -3119,6 +3565,302 @@
           "energyOldestObservedAt": "2026-08-01T06:30:00.000Z",
           "energyNewestObservedAt": "2026-08-01T06:30:00.000Z"
         }
+      },
+      "Province": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "code",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "District": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "code",
+          "name",
+          "provinceId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provinceId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Substation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "code",
+          "name",
+          "districtId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "districtId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Installation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "meterId",
+          "siteLabel",
+          "capacityKw",
+          "commissionedDate",
+          "isActive",
+          "gridSubstationId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "meterId": {
+            "type": "string"
+          },
+          "siteLabel": {
+            "type": "string"
+          },
+          "capacityKw": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "commissionedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "gridSubstationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ProvincePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count",
+          "offset",
+          "limit",
+          "next",
+          "previous"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Province"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DistrictPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count",
+          "offset",
+          "limit",
+          "next",
+          "previous"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/District"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SubstationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count",
+          "offset",
+          "limit",
+          "next",
+          "previous"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Substation"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "InstallationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count",
+          "offset",
+          "limit",
+          "next",
+          "previous"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Installation"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       }
     },
     "responses": {
@@ -3329,6 +4071,24 @@
         "headers": {
           "Cache-Control": {
             "$ref": "#/components/headers/NoStore"
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Authentication request rate or concurrency exceeded. Retry after the indicated seconds.",
+        "headers": {
+          "Retry-After": {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
           }
         }
       }

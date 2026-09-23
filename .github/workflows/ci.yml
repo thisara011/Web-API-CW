@@ -47,3 +47,7 @@ jobs:
         run: npm run check
       - name: Test with PostgreSQL
         run: npm run test:integration
+      - name: Build production image and verify packaged imports
+        run: |
+          docker build -t slsea-solar-api:ci .
+          docker run --rm --entrypoint node slsea-solar-api:ci --input-type=module -e "await import('./dist/app.js'); console.log('Packaged application and OpenAPI loaded')"

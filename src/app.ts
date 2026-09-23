@@ -11,7 +11,6 @@ import type { Environment } from './config/env.js';
 import { AuthenticationService } from './auth/service.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHierarchyRouter } from './routes/hierarchy.js';
-import { requireBearer } from './middleware/auth.js';
 import { createReadingRouter } from './routes/readings.js';
 import { createSummaryRouter } from './routes/summaries.js';
 
@@ -92,7 +91,7 @@ export function createApp({ database, logger, config, isShuttingDown = () => fal
     app.use('/auth', createAuthRouter(new AuthenticationService(database.pool, config)));
     app.use(createReadingRouter(database.pool, config));
     app.use(createSummaryRouter(database.pool, config, now));
-    app.use(requireBearer(config, 'geography:read', database.pool), createHierarchyRouter(database.pool));
+    app.use(createHierarchyRouter(database.pool, config));
   }
 
   app.use(notFound);

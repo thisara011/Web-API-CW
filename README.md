@@ -2,7 +2,7 @@
 
 NB6007CEM Web API Development coursework: a REST API for installation-bound solar reading ingestion and jurisdiction-scoped operational and historical reads.
 
-**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Stage 6 adds scoped history, pagination and conditional GET/HEAD. Stage 8 adds district generation summaries. Deployment and the Stage 7 CRUD clarification remain outstanding.
+**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Stage 6 adds scoped history, pagination and conditional GET/HEAD. Stage 8 adds district generation summaries. The completion audit adds complete paginated hierarchy directories, production credential controls, synthetic catch-up and operational CLI commands. Public deployment and the Stage 7 CRUD clarification remain outstanding.
 
 ## Run locally
 
@@ -39,7 +39,7 @@ Open [Swagger UI](http://127.0.0.1:3000/docs/) or [OpenAPI JSON](http://127.0.0.
 | `GET /docs/` | Interactive Swagger documentation |
 | `GET /openapi.json` | OpenAPI 3.1 document for all implemented endpoints |
 
-The API can serve liveness and documentation while PostgreSQL is offline; readiness correctly remains `503`. Readiness currently checks connectivity, not domain migrations or seed completeness. Later stages will extend that gate.
+Once running, the API keeps liveness and documentation available during a database outage; readiness returns `503`. Production startup and readiness also check schema access and reject active published seed credentials. An initial production readiness failure stops startup. Readiness does not certify seed completeness or freshness.
 
 `npm run db:seed` uses the migration owner and writes one fixed, reproducible historical demonstration dataset: 9 provinces, 25 districts, 25 substations, 200 installations and 134,600 readings from seven inclusive days at 15-minute intervals. It does not seed current live power. Running it again verifies the recorded generator checksum and counts, then exits without changing data. If a database contains domain data but no matching seed manifest, it stops instead of mixing datasets.
 
@@ -184,4 +184,16 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Continue with **deployment preparation and the remaining contract audit**; actual hosting needs a provider/account decision, and Stage 7 CRUD still awaits lecturer clarification in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.
+Next: **resolve the mutable-resource decision and select the public host**. Deployment preparation and the local completion audit are recorded below. The coursework conflict between append-only readings, read-only analysts and full CRUD still needs clarification; offline credential administration is not HTTP CRUD.
+
+## Completion audit and deployment preparation
+
+Analysts can browse `/provinces`, `/districts`, `/substations` and `/installations`, plus their existing atomic and nested routes. Directory pages return `{ items, count, offset, limit, next, previous }`; reading histories retain their documented `data` envelope. Use `limit` (1–100, default 25), `offset` and applicable ancestor UUID filters. Names/site labels followed by UUID provide stable ordering. Empty visible nested parents return an empty page; hidden or absent parents return 404.
+
+Login verification uses asynchronous scrypt, bounded concurrency and a per-process IP throttle. Production rejects the development signing key and known fixture credentials. Owner-only credential rotation revokes old tokens and never edits readings.
+
+- [Deployment runbook](docs/DEPLOYMENT.md): credentials, Compose/HTTPS setup, synthetic catch-up, device POST and smoke commands.
+- [Completion verification](docs/evidence/COMPLETION_AUDIT.md): actual test and local release results.
+- [Submission and viva checklist](docs/SUBMISSION_CHECKLIST.md): remaining external and student-authored work.
+
+Commands added: `npm run db:credentials`, `npm run demo:catch-up`, `npm run demo:reading` and `npm run smoke`. Read the runbook before using them; the synthetic catch-up command is for demonstration data only. Docker and a public HTTPS deployment have not been verified on this machine.

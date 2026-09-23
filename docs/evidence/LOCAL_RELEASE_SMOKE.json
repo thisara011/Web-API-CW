@@ -1,0 +1,96 @@
+{
+  "checkedAt": "2026-09-23T15:33:58.036Z",
+  "origin": "http://127.0.0.1:50071",
+  "checks": [
+    {
+      "path": "/health/live",
+      "status": 200,
+      "milliseconds": 16
+    },
+    {
+      "path": "/health/ready",
+      "status": 200,
+      "milliseconds": 2
+    },
+    {
+      "path": "/openapi.json",
+      "status": 200,
+      "milliseconds": 1
+    },
+    {
+      "path": "/installations",
+      "status": 401,
+      "milliseconds": 1
+    },
+    {
+      "path": "/provinces?limit=1",
+      "status": 200,
+      "milliseconds": 4
+    },
+    {
+      "path": "/districts?limit=1",
+      "status": 200,
+      "milliseconds": 1
+    },
+    {
+      "path": "/substations?limit=1",
+      "status": 200,
+      "milliseconds": 2
+    },
+    {
+      "path": "/installations?limit=1",
+      "status": 200,
+      "milliseconds": 2
+    },
+    {
+      "path": "/installations?limit=1",
+      "status": 200,
+      "milliseconds": 1
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/overview",
+      "status": 200,
+      "milliseconds": 3
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/latest-reading",
+      "status": 200,
+      "milliseconds": 1
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings?limit=2",
+      "status": 200,
+      "milliseconds": 2
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings?limit=2",
+      "status": 304,
+      "milliseconds": 2
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53",
+      "status": 412,
+      "milliseconds": 1
+    },
+    {
+      "path": "/readings?limit=1&sort=-timestamp",
+      "status": 200,
+      "milliseconds": 140
+    },
+    {
+      "path": "/districts/66cf2165-4a9c-5904-8040-387108878eca/generation-summary",
+      "status": 200,
+      "milliseconds": 3
+    }
+  ],
+  "sampleLatestTimestamp": "2026-09-23T15:30:00.000Z",
+  "sampleDistrictPowerCoverageComplete": true,
+  "note": "Read-only smoke: public-host persistence, full freshness, restricted analyst boundaries and ingestion require separate evidence.",
+  "environment": "Temporary isolated local database; compiled Node application, not Docker or public HTTPS",
+  "allDistrictsFreshWithMidnightCoverage": 25,
+  "observedReadingCount": 708201,
+  "scopedAnalystChecks": "passed",
+  "deviceCreateRetrieveDuplicateOwnership": "passed",
+  "apiRestartPersistence": "passed",
+  "credentials": "Random private credentials used only in memory; excluded from evidence"
+}

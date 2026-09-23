@@ -32,6 +32,7 @@ export function errorHandler(logger: Logger): ErrorRequestHandler {
       return;
     }
     const failure = publicError(error);
+    if (failure.status === 429 && !response.hasHeader('Retry-After')) response.set('Retry-After', '1');
     if (failure.status === 401) response.set('WWW-Authenticate', 'Bearer');
     if (failure.status >= 500) {
       // Do not serialize raw errors: DB errors can include credentials or SQL.

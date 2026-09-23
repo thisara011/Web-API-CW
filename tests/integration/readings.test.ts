@@ -353,3 +353,46 @@ describe('history filters, pagination and authorized HTTP validators', () => {
     expect((await get(`/installations/${site.id}/readings`).set('If-Modified-Since', 'Mon, 06 Jul 2026 07:00:00 GMT')).status).toBe(200);
   });
 });
+
+describe('complete hierarchy directories', () => {
+  it('paginates ordered, scoped root directories with filter-preserving links', async () => {
+    const first = await get(`/districts?province-id=${p1}&limit=1`, provincial);
+    expect(first.status).toBe(200);
+    expect(first.body).toMatchObject({ count: 2, offset: 0, limit: 1, previous: null, items: [{ id: d1 }] });
+    const second = await get(first.body.next, provincial);
+    expect(second.body).toMatchObject({ count: 2, offset: 1, next: null, items: [{ id: d2 }] });
+    expect(second.body.previous).toContain(`province-id=${p1}`);
+    expect((await get(second.body.previous, provincial)).body).toEqual(first.body);
+    expect((await get('/districts', district)).body.items.map((item: { id: string }) => item.id)).toEqual([d1]);
+    expect((await get('/substations', district)).body.items.map((item: { id: string }) => item.id)).toEqual([s1]);
+    expect((await get(`/installations?district-id=${d3}`, district)).body).toMatchObject({ items: [], count: 0 });
+    expect((await get(`/districts?province-id=${p2}`, provincial)).body.count).toBe(0);
+    const beyond = await get(`/districts?offset=100&limit=1`, provincial);
+    expect(beyond.body).toMatchObject({ items: [], count: 2, next: null });
+    expect((await get(beyond.body.previous, provincial)).body.items[0].id).toBe(d2);
+  });
+
+  it('distinguishes empty visible parents from absent and hidden parents', async () => {
+    const empty = randomUUID();
+    await owner.query("INSERT INTO grid_substations(id,district_id,code,name) VALUES($1,$2,$3,'Empty grid')", [empty, d1, `empty-${empty}`]);
+    expect((await get(`/substations/${empty}/installations`, district)).body).toMatchObject({ items: [], count: 0, next: null, previous: null });
+    expect((await get(`/substations/${empty}/installations`, foreign)).status).toBe(404);
+    expect((await get(`/substations/${randomUUID()}/installations`)).status).toBe(404);
+  });
+
+  it('validates queries and identifiers and enforces authentication before validators', async () => {
+    for (const path of ['/districts?limit=0', '/substations?offset=-1', '/installations?limit=101', '/provinces?district-id=' + d1, '/districts?limit=1&limit=2', '/districts?unknown=true', '/districts/not-a-uuid', `/districts/${d1}?limit=1`]) {
+      expect((await get(path)).status).toBe(400);
+    }
+    expect((await request(app).get('/installations')).status).toBe(401);
+    const site = await installation();
+    expect((await get('/installations', site.token)).status).toBe(403);
+    expect((await get(`/installations/${site.id}`, foreign).set('If-None-Match', '*')).status).toBe(404);
+    const visible = await get('/districts', provincial);
+    const cached = await get('/districts', provincial).set('If-None-Match', visible.headers.etag!);
+    expect(cached.status).toBe(304); expect(cached.text).toBe('');
+    expect((await request(app).head('/districts').auth(provincial, { type: 'bearer' })).status).toBe(200);
+    expect((await request(app).options('/installations')).headers.allow).toBe('GET, HEAD, OPTIONS');
+    expect((await request(app).delete(`/districts/${d1}`)).status).toBe(405);
+  });
+});

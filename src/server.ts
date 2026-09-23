@@ -7,6 +7,13 @@ async function start(): Promise<void> {
   const config = parseEnv(process.env);
   const logger = createLogger(config.LOG_LEVEL);
   const database = createDatabase(config, logger);
+  if (config.NODE_ENV === 'production') {
+    try { await database.checkConnection(); }
+    catch {
+      await database.close();
+      throw new Error('Production readiness failed; check database access, migrations and disabled fixture credentials');
+    }
+  }
   let shuttingDown = false;
   const app = createApp({ database, logger, config, isShuttingDown: () => shuttingDown });
   const server = app.listen(config.PORT, config.HOST);

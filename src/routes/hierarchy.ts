@@ -1,58 +1,33 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
-import type { Principal } from '../auth/tokens.js';
-import { ApiError } from '../http/errors.js';
+import type { Environment } from '../config/env.js';
 import { sendRepresentation } from '../http/conditional.js';
+import { ApiError } from '../http/errors.js';
+import { requireBearer } from '../middleware/auth.js';
+import { readOnlyMethods } from '../middleware/requests.js';
+import { HierarchyService, directoryQuery, type Resource } from '../modules/hierarchy/service.js';
+import { resourceId } from '../modules/readings/validation.js';
 
-type Row = Record<string, unknown>;
-function requireAnalyst(principal: Principal | undefined): Extract<Principal, { kind: 'analyst' }> {
-  if (!principal || principal.kind !== 'analyst') throw new ApiError(403, 40301, 'Principal is not permitted to access this resource');
-  return principal;
-}
-function scopeSql(principal: Extract<Principal, { kind: 'analyst' }>, alias: string): { text: string; values: string[] } {
-  if (principal.role === 'national') return { text: 'TRUE', values: [] };
-  if (principal.role === 'provincial') return { text: `${alias}.province_id = $1`, values: [principal.provinceId!] };
-  return { text: `${alias}.id = $1`, values: [principal.districtId!] };
-}
-async function one(pool: Pool, text: string, values: unknown[]): Promise<Row> {
-  const result = await pool.query<Row>(text, values);
-  if (!result.rows[0]) throw new ApiError(404, 40401, 'Resource not found');
-  return result.rows[0];
-}
-export function createHierarchyRouter(pool: Pool): Router {
-  const router = Router();
-  router.use((request, _response, next) => { try { requireAnalyst(request.principal); next(); } catch (error) { next(error); } });
-  router.get('/provinces', async (request, response) => {
-    const p = requireAnalyst(request.principal);
-    const where: { sql: string; values: Array<string | undefined> } = p.role === 'national' ? { sql: 'TRUE', values: [] } : { sql: 'p.id = $1', values: [p.provinceId ?? (await pool.query<{ province_id: string }>('SELECT province_id FROM districts WHERE id = $1', [p.districtId])).rows[0]?.province_id] };
-    const result = await pool.query('SELECT id, code, name FROM provinces p WHERE ' + where.sql + ' ORDER BY code', where.values); sendRepresentation(request, response, { items: result.rows });
-  });
-  router.get('/provinces/:provinceId', async (request, response) => {
-    const p = requireAnalyst(request.principal); const permitted = p.role === 'national' ? 'TRUE' : 'p.id = $2';
-    const parameter = p.provinceId ?? (await pool.query<{ province_id: string }>('SELECT province_id FROM districts WHERE id = $1', [p.districtId])).rows[0]?.province_id;
-    sendRepresentation(request, response, await one(pool, `SELECT p.id, p.code, p.name FROM provinces p WHERE p.id = $1 AND ${permitted}`, p.role === 'national' ? [request.params.provinceId] : [request.params.provinceId, parameter]));
-  });
-  router.get('/provinces/:provinceId/districts', async (request, response) => {
-    const p = requireAnalyst(request.principal); const allowedProvince = p.provinceId ?? (p.role === 'district' ? (await pool.query<{ province_id: string }>('SELECT province_id FROM districts WHERE id = $1', [p.districtId])).rows[0]?.province_id : null);
-    const result = await pool.query('SELECT d.id, d.code, d.name, d.province_id AS "provinceId" FROM districts d WHERE d.province_id = $1 AND ($2::uuid IS NULL OR d.province_id = $2) AND ($3::uuid IS NULL OR d.id = $3) ORDER BY d.code', [request.params.provinceId, p.role === 'national' ? null : allowedProvince, p.role === 'district' ? p.districtId : null]);
-    if (result.rowCount === 0 && p.role !== 'national') throw new ApiError(404, 40401, 'Resource not found'); sendRepresentation(request, response, { items: result.rows });
-  });
-  router.get('/districts/:districtId', async (request, response) => {
-    const p = requireAnalyst(request.principal); const clause = p.role === 'national' ? 'TRUE' : p.role === 'provincial' ? 'd.province_id = $2' : 'd.id = $2'; const scope = p.role === 'provincial' ? p.provinceId : p.districtId;
-    sendRepresentation(request, response, await one(pool, `SELECT d.id, d.code, d.name, d.province_id AS "provinceId" FROM districts d WHERE d.id = $1 AND ${clause}`, p.role === 'national' ? [request.params.districtId] : [request.params.districtId, scope]));
-  });
-  router.get('/districts/:districtId/substations', async (request, response) => {
-    const p = requireAnalyst(request.principal); const clause = p.role === 'national' ? 'TRUE' : p.role === 'provincial' ? 'd.province_id = $2' : 'd.id = $2'; const scope = p.role === 'provincial' ? p.provinceId : p.districtId;
-    const result = await pool.query(`SELECT s.id, s.code, s.name, s.district_id AS "districtId" FROM grid_substations s JOIN districts d ON d.id=s.district_id WHERE s.district_id=$1 AND ${clause} ORDER BY s.code`, p.role === 'national' ? [request.params.districtId] : [request.params.districtId, scope]); if (result.rowCount === 0) throw new ApiError(404, 40401, 'Resource not found'); sendRepresentation(request, response, { items: result.rows });
-  });
-  router.get('/substations/:substationId', async (request, response) => {
-    const p = requireAnalyst(request.principal); const filter = scopeSql(p, 'd'); sendRepresentation(request, response, await one(pool, `SELECT s.id,s.code,s.name,s.district_id AS "districtId" FROM grid_substations s JOIN districts d ON d.id=s.district_id WHERE s.id=$${filter.values.length + 1} AND ${filter.text}`, [...filter.values, request.params.substationId]));
-  });
-  router.get('/substations/:substationId/installations', async (request, response) => {
-    const p = requireAnalyst(request.principal); const filter = scopeSql(p, 'd'); const result = await pool.query(`SELECT i.id,i.meter_id AS "meterId",i.site_label AS "siteLabel",i.capacity_kw AS "capacityKw",i.commissioned_date AS "commissionedDate",i.is_active AS "isActive",i.grid_substation_id AS "gridSubstationId" FROM solar_installations i JOIN grid_substations s ON s.id=i.grid_substation_id JOIN districts d ON d.id=s.district_id WHERE s.id=$${filter.values.length + 1} AND ${filter.text} ORDER BY i.meter_id`, [...filter.values, request.params.substationId]); if (result.rowCount === 0) throw new ApiError(404, 40401, 'Resource not found'); sendRepresentation(request, response, { items: result.rows });
-  });
-  router.get('/installations/:installationId', async (request, response) => {
-    const p = requireAnalyst(request.principal); const filter = scopeSql(p, 'd'); sendRepresentation(request, response, await one(pool, `SELECT i.id,i.meter_id AS "meterId",i.site_label AS "siteLabel",i.capacity_kw AS "capacityKw",i.commissioned_date AS "commissionedDate",i.is_active AS "isActive",i.grid_substation_id AS "gridSubstationId" FROM solar_installations i JOIN grid_substations s ON s.id=i.grid_substation_id JOIN districts d ON d.id=s.district_id WHERE i.id=$${filter.values.length + 1} AND ${filter.text}`, [...filter.values, request.params.installationId]));
-  });
+export function createHierarchyRouter(pool: Pool, config: Environment): Router {
+  const router = Router(), service = new HierarchyService(pool);
+  const read = requireBearer(config, 'geography:read', pool);
+  for (const resource of ['provinces', 'districts', 'substations', 'installations'] as const) {
+    router.route(`/${resource}`).get(read, async (request, response) => {
+      const query = directoryQuery(resource, request.query);
+      sendRepresentation(request, response, await service.list(resource, request.principal!, query, `/${resource}`));
+    }).all(readOnlyMethods);
+    router.route(`/${resource}/:id`).get(read, async (request, response) => {
+      if (Object.keys(request.query).length) throw new ApiError(400, 40002, 'Atomic resources do not accept query parameters');
+      const id = resourceId(request.params.id, 'id');
+      sendRepresentation(request, response, await service.one(resource, request.principal!, id));
+    }).all(readOnlyMethods);
+  }
+  const nested: Array<[Resource, Resource]> = [['provinces', 'districts'], ['districts', 'substations'], ['substations', 'installations']];
+  for (const [parent, child] of nested) {
+    router.route(`/${parent}/:id/${child}`).get(read, async (request, response) => {
+      const id = resourceId(request.params.id, 'id'), query = directoryQuery(child, request.query);
+      sendRepresentation(request, response, await service.list(child, request.principal!, query, `/${parent}/${id}/${child}`, { resource: parent, id }));
+    }).all(readOnlyMethods);
+  }
   return router;
 }
