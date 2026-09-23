@@ -2,7 +2,7 @@
 
 NB6007CEM Web API Development coursework: a REST API for installation-bound solar reading ingestion and jurisdiction-scoped operational and historical reads.
 
-**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Reading ingestion and historical analytical endpoints are later stages.
+**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Historical analytical endpoints remain planned.
 
 ## Run locally
 
@@ -20,7 +20,7 @@ npm run dev
 
 Copy the environment template only on initial setup; preserve your existing `.env` on later runs. The template's credentials are public, local-development fixtures. Hosted credentials belong in environment secrets. `DATABASE_SSL=true` enables certificate-verified TLS; configure trusted CAs for your provider rather than disabling certificate checks. Connection URL query parameters are rejected because they can override identity and TLS settings.
 
-`MIGRATION_DATABASE_URL` connects as the schema owner (`slsea_dev` in local Compose); `DATABASE_URL` connects as the restricted application account (`slsea_app`). The latter can read the six domain tables and insert readings. It cannot write metadata, change/delete historical readings, edit the migration ledger or create domain objects. Authentication and jurisdiction authorization still need to be implemented in the API.
+`MIGRATION_DATABASE_URL` connects as the schema owner (`slsea_dev` in local Compose); `DATABASE_URL` connects as the restricted application account (`slsea_app`). The latter can read the six domain tables and insert readings. It cannot write metadata, change/delete historical readings, edit the migration ledger or create domain objects. The API additionally checks JWT credentials, operation scopes and jurisdiction for protected requests.
 
 For an **existing Stage 1 Compose volume**, PostgreSQL does not rerun initialization scripts automatically. Create the local application role without deleting the volume:
 
@@ -37,7 +37,7 @@ Open [Swagger UI](http://127.0.0.1:3000/docs/) or [OpenAPI JSON](http://127.0.0.
 | `GET /health/live` | `200` when the HTTP process is serving requests; does not query PostgreSQL |
 | `GET /health/ready` | `200` after a successful database query; `503` when PostgreSQL is unavailable or the process is stopping |
 | `GET /docs/` | Interactive Swagger documentation |
-| `GET /openapi.json` | OpenAPI 3.1 document for the implemented foundation endpoints |
+| `GET /openapi.json` | OpenAPI 3.1 document for all implemented endpoints |
 
 The API can serve liveness and documentation while PostgreSQL is offline; readiness correctly remains `503`. Readiness currently checks connectivity, not domain migrations or seed completeness. Later stages will extend that gate.
 
@@ -52,6 +52,23 @@ curl -i -H 'Accept: application/xml' http://127.0.0.1:3000/health/live
 ```
 
 The last request demonstrates a JSON `406` error. All application responses include a server-generated `X-Request-Id`. Health probes use `no-store` and ignore conditional caching headers; conditional retrieval of business resources arrives in Stage 6.
+
+## Reading workflow (Stage 5)
+
+| Method | Endpoint | Access |
+| --- | --- | --- |
+| POST | `/installations/{installationId}/readings` | Owning device with `readings:write` |
+| GET | `/readings/{readingId}` | Analyst within the installation jurisdiction |
+| GET | `/installations/{installationId}/latest-reading` | Scoped analyst; latest by observation time |
+| GET | `/installations/{installationId}/overview` | Scoped analyst; metadata, hierarchy and nullable `lastKnownReading` |
+
+All paths currently use the host root. `/installations/{id}` remains the atomic metadata resource; `/overview` is the composite. This preserves the established Stage 4 routes. The original proposed version prefix and nested atomic-reading URI are tracked in [the API design](docs/API_DESIGN.md).
+
+Use Swagger to obtain an analyst token, navigate to a substation's installations and copy the chosen installation ID. Obtain the corresponding device token through `/auth/token`, then POST a timezone-qualified timestamp, `powerKw`, `cumulativeEnergyKwh` and `voltage`. Measurements are JSON numbers with at most three decimal places. The counter must fit the preceding and following observations; timestamps cannot precede commissioning or exceed server time by five minutes.
+
+Successful POST returns `201`, the reading, and matching `Location`/`Content-Location` headers. Switch to the analyst token to GET that Location or the latest/overview resources. Devices receive the created representation but do not gain GET access. Retrying the timestamp returns `409`, even for an identical body. An empty site has `lastKnownReading: null` in its overview and `404` for latest-reading. Latest may be historical; the API does not claim it is live telemetry.
+
+See [Stage 5 verification](docs/evidence/STAGE_5.md) for the checks and counter/concurrency examples. Seed once before ingestion: the existing seed verifier requires exact manifest counts and will refuse a re-run after additional live readings are present; it never deletes them.
 
 ## Checks
 
@@ -98,7 +115,9 @@ src/cli/                   explicit migration and permission commands
 db/migrations/             versioned SQL schema
 db/local/                  local-only PostgreSQL role bootstrap
 src/http/errors.ts          public application error type
-src/middleware/             negotiation, request IDs and consistent errors
+src/middleware/             bearer verification, negotiation and consistent errors
+src/modules/readings/       measurement validation, transactional ingestion and scoped reads
+src/routes/readings.ts      reading HTTP routes and method contracts
 openapi/openapi.json        shared Swagger/OpenAPI contract
 tests/                      HTTP and configuration checks
 tests/integration/          real PostgreSQL checks
@@ -107,7 +126,7 @@ Dockerfile                  nonroot application image for later deployment
 .github/workflows/ci.yml    automated build and database checks
 ```
 
-Do not expose this foundation as the completed coursework API. Authentication and jurisdiction checks will be implemented before the business resources are published. Database owner credentials are for migrations and seed administration, not the running server. In a built container, migration commands are `node dist/cli/migrate.js` and `node dist/cli/grant-runtime.js`; startup never runs them automatically.
+The coursework API is still in progress; historical queries, conditional HTTP behavior, summaries and deployment remain planned. Database owner credentials are for migrations and seed administration, not the running server. In a built container, migration commands are `node dist/cli/migrate.js` and `node dist/cli/grant-runtime.js`; startup never runs them automatically.
 
 See [the database guide](docs/DATABASE.md) for the model, immutability rules, migration behavior and account separation.
 
@@ -120,4 +139,4 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Continue with **Stage 5: immutable reading ingestion and operational reads** in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.
+Continue with **Stage 6: historical queries, pagination and conditional HTTP responses** in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.

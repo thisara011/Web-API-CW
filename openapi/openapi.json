@@ -3,7 +3,7 @@
   "info": {
     "title": "SLSEA Solar Generation API",
     "version": "0.1.0",
-    "description": "SLSEA Solar Generation API. Health checks and OpenAPI are public. Stage 4 provides short-lived JWT bearer tokens and jurisdiction-scoped hierarchy reads. The demonstration credentials described in the README are only for a local seeded database."
+    "description": "SLSEA Solar Generation API, Stages 1\u20135. Public health and OpenAPI; JWT-protected hierarchy, device-owned append-only readings, analyst atomic/latest/overview reads. Current routes are relative to the host root. Authenticated responses use Cache-Control: no-store; conditional validators and historical collections are planned for Stage 6."
   },
   "servers": [
     {
@@ -28,6 +28,10 @@
     {
       "name": "Hierarchy",
       "description": "Analyst-only geography and installation resources filtered by JWT jurisdiction."
+    },
+    {
+      "name": "Readings",
+      "description": "Immutable measurements. Devices append their own readings; analysts read only within their jurisdiction."
     }
   ],
   "paths": {
@@ -175,7 +179,7 @@
           "Documentation"
         ],
         "summary": "Read the OpenAPI description",
-        "description": "Returns this OpenAPI 3.1 document as JSON. Only implemented foundation endpoints are included.",
+        "description": "Returns this OpenAPI 3.1 document for implemented operations.",
         "responses": {
           "200": {
             "description": "The OpenAPI document describing the implemented API.",
@@ -334,7 +338,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "additionalProperties": true
                 }
               }
             }
@@ -424,7 +438,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "additionalProperties": true
                 }
               }
             }
@@ -514,7 +538,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "additionalProperties": true
                 }
               }
             }
@@ -604,7 +638,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Collection"
+                  "type": "object",
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "additionalProperties": true
                 }
               }
             }
@@ -617,6 +661,323 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/installations/{installationId}/readings": {
+      "post": {
+        "operationId": "appendReading",
+        "tags": [
+          "Readings"
+        ],
+        "summary": "Append a reading for the authenticated installation",
+        "description": "Requires readings:write, an active installation principal matching the URL, and current credential version. Unknown fields and excessive precision return 40002. Repeated timestamps return 40901; inconsistent cumulative counters return 40902. Per-installation transaction locks serialize API ingestion. Meter resets are unsupported. Devices receive the created representation but cannot GET Location with a device token. GET history arrives in Stage 6; currently Allow is POST, OPTIONS.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "installationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created immutable observation. Location and Content-Location identify the analyst-readable canonical resource.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/NoStore"
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Canonical /readings/{readingId} URI."
+              },
+              "Content-Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "URI of this representation."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reading"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "409": {
+            "$ref": "#/components/responses/ReadingConflict"
+          }
+        }
+      }
+    },
+    "/readings/{readingId}": {
+      "get": {
+        "operationId": "getReading",
+        "tags": [
+          "Readings"
+        ],
+        "summary": "Retrieve an immutable reading",
+        "description": "Requires installation:read and an active analyst whose current stored role and jurisdiction match the JWT. Out-of-scope and absent readings return 404. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "readingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized representation.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/NoStore"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reading"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/installations/{installationId}/latest-reading": {
+      "get": {
+        "operationId": "getLatestReading",
+        "tags": [
+          "Readings"
+        ],
+        "summary": "Retrieve the latest observation",
+        "description": "Latest is selected by observation timestamp and id tie-breaker. Late arrivals cannot replace a newer observation. Empty, absent and hidden installations return 404. Latest does not imply fresh or live. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "installationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized representation.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/NoStore"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reading"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/installations/{installationId}/overview": {
+      "get": {
+        "operationId": "getInstallationOverview",
+        "tags": [
+          "Readings"
+        ],
+        "summary": "Retrieve installation, hierarchy and latest reading",
+        "description": "One scoped SQL snapshot returns safe installation metadata, ancestor references and lastKnownReading (null for an empty site). No unbounded history or credentials are returned. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "installationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized representation.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/NoStore"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
@@ -822,6 +1183,208 @@
             }
           }
         }
+      },
+      "ReadingInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "timestamp",
+          "powerKw",
+          "cumulativeEnergyKwh",
+          "voltage"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "description": "Seconds and timezone required, at most three fractional digits. On or after Unix epoch and commissioning date in Asia/Colombo; at most five minutes ahead of server time. Backfill must fit both counter neighbours."
+          },
+          "powerKw": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999.999,
+            "multipleOf": 0.001
+          },
+          "cumulativeEnergyKwh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999999.999,
+            "multipleOf": 0.001
+          },
+          "voltage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999.999,
+            "multipleOf": 0.001
+          }
+        },
+        "example": {
+          "timestamp": "2026-09-23T06:00:00Z",
+          "powerKw": 3.42,
+          "cumulativeEnergyKwh": 1267.84,
+          "voltage": 231.2
+        }
+      },
+      "Reading": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "installationId",
+          "timestamp",
+          "powerKw",
+          "cumulativeEnergyKwh",
+          "voltage",
+          "receivedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "installationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$",
+            "description": "Seconds and timezone required, at most three fractional digits. On or after Unix epoch and commissioning date in Asia/Colombo; at most five minutes ahead of server time. Backfill must fit both counter neighbours."
+          },
+          "powerKw": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999.999,
+            "multipleOf": 0.001
+          },
+          "cumulativeEnergyKwh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999999999.999,
+            "multipleOf": 0.001
+          },
+          "voltage": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999.999,
+            "multipleOf": 0.001
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Server receipt time; latest selection uses observation time."
+          }
+        }
+      },
+      "GeographicReference": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "code",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "OverviewInstallation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "meterId",
+          "siteLabel",
+          "capacityKw",
+          "commissionedDate",
+          "isActive",
+          "gridSubstationId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "meterId": {
+            "type": "string"
+          },
+          "siteLabel": {
+            "type": "string"
+          },
+          "capacityKw": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "commissionedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "gridSubstationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "InstallationOverview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "installation",
+          "hierarchy",
+          "lastKnownReading"
+        ],
+        "properties": {
+          "installation": {
+            "$ref": "#/components/schemas/OverviewInstallation"
+          },
+          "hierarchy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "province",
+              "district",
+              "substation"
+            ],
+            "properties": {
+              "province": {
+                "$ref": "#/components/schemas/GeographicReference"
+              },
+              "district": {
+                "$ref": "#/components/schemas/GeographicReference"
+              },
+              "substation": {
+                "$ref": "#/components/schemas/GeographicReference"
+              }
+            }
+          },
+          "lastKnownReading": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Reading"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
       }
     },
     "responses": {
@@ -962,6 +1525,15 @@
               "$ref": "#/components/schemas/ApiError"
             }
           }
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "schema": {
+              "type": "string",
+              "const": "Bearer"
+            },
+            "description": "Bearer authentication challenge."
+          }
         }
       },
       "Forbidden": {
@@ -970,6 +1542,43 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "ReadingConflict": {
+        "description": "40901: duplicate timestamp (identical or conflicting). 40902: cumulative counter decreases relative to either immediate neighbour. Existing readings are never changed.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            },
+            "examples": {
+              "duplicate": {
+                "value": {
+                  "error": {
+                    "code": 40901,
+                    "message": "A reading already exists for this installation and timestamp",
+                    "details": [],
+                    "requestId": "7d50a2a4-39a5-46cc-a8ae-a6ccba1d3897"
+                  }
+                }
+              },
+              "counter": {
+                "value": {
+                  "error": {
+                    "code": 40902,
+                    "message": "Cumulative energy conflicts with surrounding observations",
+                    "details": [
+                      {
+                        "field": "cumulativeEnergyKwh",
+                        "message": "Counter must not decrease in observation-time order; meter resets are unsupported"
+                      }
+                    ],
+                    "requestId": "7d50a2a4-39a5-46cc-a8ae-a6ccba1d3897"
+                  }
+                }
+              }
             }
           }
         }

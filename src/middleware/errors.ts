@@ -32,6 +32,7 @@ export function errorHandler(logger: Logger): ErrorRequestHandler {
       return;
     }
     const failure = publicError(error);
+    if (failure.status === 401) response.set('WWW-Authenticate', 'Bearer');
     if (failure.status >= 500) {
       // Do not serialize raw errors: DB errors can include credentials or SQL.
       logger.error({ requestId: response.locals.requestId, code: failure.code }, 'Request failed');

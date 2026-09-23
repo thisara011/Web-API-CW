@@ -12,6 +12,7 @@ import { AuthenticationService } from './auth/service.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHierarchyRouter } from './routes/hierarchy.js';
 import { requireBearer } from './middleware/auth.js';
+import { createReadingRouter } from './routes/readings.js';
 
 interface AppDependencies {
   database: DatabaseHealth;
@@ -87,7 +88,8 @@ export function createApp({ database, logger, config, isShuttingDown = () => fal
 
   if (config && database.pool) {
     app.use('/auth', createAuthRouter(new AuthenticationService(database.pool, config)));
-    app.use(requireBearer(config, 'geography:read'), createHierarchyRouter(database.pool));
+    app.use(createReadingRouter(database.pool, config));
+    app.use(requireBearer(config, 'geography:read', database.pool), createHierarchyRouter(database.pool));
   }
 
   app.use(notFound);

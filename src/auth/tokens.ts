@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { z } from 'zod';
 import type { Environment } from '../config/env.js';
 import { ApiError } from '../http/errors.js';
 
@@ -26,16 +27,20 @@ export async function issueToken(principal: Principal, config: Environment): Pro
 
 export async function verifyToken(token: string, config: Environment): Promise<Principal> {
   try {
-    const { payload } = await jwtVerify(token, secret(config), { issuer: config.JWT_ISSUER, audience: config.JWT_AUDIENCE, algorithms: ['HS256'] });
+    const { payload } = await jwtVerify(token, secret(config), {
+      issuer: config.JWT_ISSUER, audience: config.JWT_AUDIENCE, algorithms: ['HS256'], typ: 'JWT',
+      requiredClaims: ['sub', 'iat', 'exp'], maxTokenAge: `${config.JWT_EXPIRES_IN_SECONDS}s`,
+    });
     const scopes = typeof payload.scope === 'string' ? payload.scope.split(' ').filter(Boolean) : [];
-    if (typeof payload.sub !== 'string' || !Number.isInteger(payload.cv) || !['analyst', 'installation'].includes(String(payload.kind))) throw new Error('invalid claims');
+    if (!z.uuid().safeParse(payload.sub).success || typeof payload.sub !== 'string' || !Number.isInteger(payload.cv) || Number(payload.cv) < 1 || !['analyst', 'installation'].includes(String(payload.kind))) throw new Error('invalid claims');
     if (payload.kind === 'installation') {
-      if (typeof payload.installation_id !== 'string') throw new Error('invalid installation claims');
+      if (payload.installation_id !== payload.sub) throw new Error('invalid installation claims');
       return { kind: 'installation', subject: payload.sub, credentialVersion: payload.cv as number, installationId: payload.installation_id, scopes };
     }
     if (!['national', 'provincial', 'district'].includes(String(payload.role))) throw new Error('invalid analyst claims');
     const provinceId = typeof payload.province_id === 'string' ? payload.province_id : null;
     const districtId = typeof payload.district_id === 'string' ? payload.district_id : null;
+    if ((provinceId && !z.uuid().safeParse(provinceId).success) || (districtId && !z.uuid().safeParse(districtId).success)) throw new Error('invalid jurisdiction identifier');
     if ((payload.role === 'national' && (provinceId || districtId)) || (payload.role === 'provincial' && (!provinceId || districtId)) || (payload.role === 'district' && (provinceId || !districtId))) throw new Error('invalid scope claims');
     return { kind: 'analyst', subject: payload.sub, credentialVersion: payload.cv as number, role: payload.role as 'national' | 'provincial' | 'district', provinceId, districtId, scopes };
   } catch {

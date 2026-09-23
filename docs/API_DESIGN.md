@@ -1,6 +1,14 @@
 # Proposed API contract
 
-Status: business API design remains proposed. Stage 1 operational endpoints and the shared error envelope are implemented and described in `openapi/openapi.json`. Revise the business contract against the confirmed module white paper and the CRUD clarification before expanding OpenAPI. Base path: `/solar/v1.0`, following the candidate white paper's feature/version convention. JSON property names use camelCase; URI segments and query parameter names use lowercase with hyphens.
+Status: this document retains the original target design; `openapi/openapi.json` is the implemented contract through Stage 5. The following deliberate differences reconcile the running Stage 4 API and the Stage 5 endpoint surface discussed with the student:
+
+- Current base path is `/`, with `/auth/token`, `/substations`, `/installations/{id}/latest-reading`, and canonical `/readings/{readingId}`. The original table below proposes `/solar/v1.0`, `/auth/tokens`, `/grid-substations`, `/last-known-reading`, and nested reading identity. A version-prefix/naming migration requires a separate coordinated change; these alternate URLs are not advertised as implemented.
+- Analysts currently use `geography:read` and `installation:read` together with national/provincial/district attributes; devices use `readings:write` and a bound installation identity. Every protected request rechecks stored activity, credential version and (for analysts) jurisdiction. JWT verification requires expiry and issued-at claims, configured issuer/audience, HS256 and JWT type.
+- Stage 5 implements numeric measurements (up to three decimal places), timezone-qualified timestamps with seconds and up to three fractional digits, Unix epoch/commissioning lower bounds, and five-minute future tolerance. It serializes counter validation and insertion per installation in a READ COMMITTED transaction. A late observation must fit both neighbours; equal counters are allowed. Counter conflicts return 40902, repeated timestamps 40901.
+- The composite remains `/installations/{id}/overview`; `/installations/{id}` remains atomic metadata. The overview has `installation`, `hierarchy`, and nullable `lastKnownReading`. Reading GETs return JSON numbers and UTC timestamps.
+- POST currently returns 201, Location and Content-Location. ETag, Last-Modified, conditional retrieval and historical collection GET remain Stage 6 work. GET resources support HEAD/OPTIONS and reject mutation with 405/Allow.
+
+JSON property names use camelCase. The unresolved CRUD interpretation remains separate from immutable readings.
 
 ## 1. Principals and authorization
 

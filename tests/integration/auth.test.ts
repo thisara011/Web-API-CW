@@ -51,4 +51,21 @@ describe('JWT authentication and jurisdiction-scoped reads', () => {
     const invalid = await request(app).post('/auth/token').send({ principalType: 'analyst', identifier: 'analyst-national@slsea.example', password: 'wrong-password-value' });
     expect(invalid.status).toBe(401); expect(invalid.body.error.message).toBe('Invalid credentials');
   });
+
+  it('accepts an append-only reading only from its own device and exposes it to authorized analysts', async () => {
+    const device = await request(app).post('/auth/token').send({ principalType: 'installation', identifier: 'SLSEA-COL-001', password: 'device-SLSEA-COL-001' });
+    const installation = dataset.installations.find((item) => item.meterId === 'SLSEA-COL-001')!;
+    const other = dataset.installations.find((item) => item.meterId === 'SLSEA-COL-002')!;
+    const payload = { timestamp: '2026-09-01T00:00:00.000Z', powerKw: 0, cumulativeEnergyKwh: 9999.5, voltage: 230.1 };
+    const created = await request(app).post(`/installations/${installation.id}/readings`).set('Authorization', `Bearer ${device.body.accessToken}`).send(payload);
+    expect(created.status).toBe(201); expect(created.headers.location).toBe(`/readings/${created.body.id}`);
+    expect((await request(app).post(`/installations/${other.id}/readings`).set('Authorization', `Bearer ${device.body.accessToken}`).send(payload)).status).toBe(403);
+    expect((await request(app).post(`/installations/${installation.id}/readings`).set('Authorization', `Bearer ${device.body.accessToken}`).send(payload)).status).toBe(409);
+    const analyst = await request(app).post('/auth/token').send({ principalType: 'analyst', identifier: 'analyst-national@slsea.example', password: 'Coursework-Demo-Password-2026!' });
+    expect((await request(app).get(`/readings/${created.body.id}`).set('Authorization', `Bearer ${analyst.body.accessToken}`)).status).toBe(200);
+    const latest = await request(app).get(`/installations/${installation.id}/latest-reading`).set('Authorization', `Bearer ${analyst.body.accessToken}`);
+    expect(latest.status).toBe(200); expect(latest.body.id).toBe(created.body.id);
+    const overview = await request(app).get(`/installations/${installation.id}/overview`).set('Authorization', `Bearer ${analyst.body.accessToken}`);
+    expect(overview.status).toBe(200); expect(overview.body.lastKnownReading.id).toBe(created.body.id);
+  });
 });

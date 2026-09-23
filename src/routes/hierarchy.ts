@@ -11,7 +11,7 @@ function requireAnalyst(principal: Principal | undefined): Extract<Principal, { 
 function scopeSql(principal: Extract<Principal, { kind: 'analyst' }>, alias: string): { text: string; values: string[] } {
   if (principal.role === 'national') return { text: 'TRUE', values: [] };
   if (principal.role === 'provincial') return { text: `${alias}.province_id = $1`, values: [principal.provinceId!] };
-  return { text: `${alias}.district_id = $1`, values: [principal.districtId!] };
+  return { text: `${alias}.id = $1`, values: [principal.districtId!] };
 }
 async function one(pool: Pool, text: string, values: unknown[]): Promise<Row> {
   const result = await pool.query<Row>(text, values);
@@ -29,20 +29,20 @@ export function createHierarchyRouter(pool: Pool): Router {
   router.get('/provinces/:provinceId', async (request, response) => {
     const p = requireAnalyst(request.principal); const permitted = p.role === 'national' ? 'TRUE' : 'p.id = $2';
     const parameter = p.provinceId ?? (await pool.query<{ province_id: string }>('SELECT province_id FROM districts WHERE id = $1', [p.districtId])).rows[0]?.province_id;
-    response.json(await one(pool, `SELECT p.id, p.code, p.name FROM provinces p WHERE p.id = $1 AND ${permitted}`, [request.params.provinceId, parameter]));
+    response.json(await one(pool, `SELECT p.id, p.code, p.name FROM provinces p WHERE p.id = $1 AND ${permitted}`, p.role === 'national' ? [request.params.provinceId] : [request.params.provinceId, parameter]));
   });
   router.get('/provinces/:provinceId/districts', async (request, response) => {
     const p = requireAnalyst(request.principal); const allowedProvince = p.provinceId ?? (p.role === 'district' ? (await pool.query<{ province_id: string }>('SELECT province_id FROM districts WHERE id = $1', [p.districtId])).rows[0]?.province_id : null);
-    const result = await pool.query('SELECT d.id, d.code, d.name, d.province_id AS "provinceId" FROM districts d WHERE d.province_id = $1 AND ($2::uuid IS NULL OR d.province_id = $2) ORDER BY d.code', [request.params.provinceId, p.role === 'national' ? null : allowedProvince]);
+    const result = await pool.query('SELECT d.id, d.code, d.name, d.province_id AS "provinceId" FROM districts d WHERE d.province_id = $1 AND ($2::uuid IS NULL OR d.province_id = $2) AND ($3::uuid IS NULL OR d.id = $3) ORDER BY d.code', [request.params.provinceId, p.role === 'national' ? null : allowedProvince, p.role === 'district' ? p.districtId : null]);
     if (result.rowCount === 0 && p.role !== 'national') throw new ApiError(404, 40401, 'Resource not found'); response.json({ items: result.rows });
   });
   router.get('/districts/:districtId', async (request, response) => {
     const p = requireAnalyst(request.principal); const clause = p.role === 'national' ? 'TRUE' : p.role === 'provincial' ? 'd.province_id = $2' : 'd.id = $2'; const scope = p.role === 'provincial' ? p.provinceId : p.districtId;
-    response.json(await one(pool, `SELECT d.id, d.code, d.name, d.province_id AS "provinceId" FROM districts d WHERE d.id = $1 AND ${clause}`, [request.params.districtId, scope]));
+    response.json(await one(pool, `SELECT d.id, d.code, d.name, d.province_id AS "provinceId" FROM districts d WHERE d.id = $1 AND ${clause}`, p.role === 'national' ? [request.params.districtId] : [request.params.districtId, scope]));
   });
   router.get('/districts/:districtId/substations', async (request, response) => {
     const p = requireAnalyst(request.principal); const clause = p.role === 'national' ? 'TRUE' : p.role === 'provincial' ? 'd.province_id = $2' : 'd.id = $2'; const scope = p.role === 'provincial' ? p.provinceId : p.districtId;
-    const result = await pool.query(`SELECT s.id, s.code, s.name, s.district_id AS "districtId" FROM grid_substations s JOIN districts d ON d.id=s.district_id WHERE s.district_id=$1 AND ${clause} ORDER BY s.code`, [request.params.districtId, scope]); if (result.rowCount === 0) throw new ApiError(404, 40401, 'Resource not found'); response.json({ items: result.rows });
+    const result = await pool.query(`SELECT s.id, s.code, s.name, s.district_id AS "districtId" FROM grid_substations s JOIN districts d ON d.id=s.district_id WHERE s.district_id=$1 AND ${clause} ORDER BY s.code`, p.role === 'national' ? [request.params.districtId] : [request.params.districtId, scope]); if (result.rowCount === 0) throw new ApiError(404, 40401, 'Resource not found'); response.json({ items: result.rows });
   });
   router.get('/substations/:substationId', async (request, response) => {
     const p = requireAnalyst(request.principal); const filter = scopeSql(p, 'd'); response.json(await one(pool, `SELECT s.id,s.code,s.name,s.district_id AS "districtId" FROM grid_substations s JOIN districts d ON d.id=s.district_id WHERE s.id=$${filter.values.length + 1} AND ${filter.text}`, [...filter.values, request.params.substationId]));

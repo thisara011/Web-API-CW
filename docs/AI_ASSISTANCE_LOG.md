@@ -79,6 +79,18 @@ This is a working disclosure record, not a substitute for the report appendix or
 - Limitation: HS256 needs a unique protected deployment secret. The documented seed passwords are public local demonstration fixtures and must be replaced before public deployment. Device reading writes and token credential-version revocation checks arrive in Stage 5.
 - Student explanation checkpoint: distinguish `geography:read` from jurisdiction attributes, identify why a device token cannot read a hierarchy collection, and trace a forged token to signature verification.
 
+## Entry 006 — Stage 5 resumed and reviewed
+
+- Date: 23 September 2026; tool: Codex (GPT-6).
+- User direction: “lets do it”, followed by “can you start where we have stop”. Resumed the uncommitted reading routes and draft integration test.
+- Artifacts: reading validation/service/router, bearer revalidation, expanded OpenAPI, restricted-role PostgreSQL workflow tests, input/token unit tests and evidence notes.
+- Actual defects found: draft POST lacked event-time counter checks and concurrency serialization, accepted excessive precision and future timestamps, and returned NUMERIC strings. The old JWT verifier did not require expiry. Existing hierarchy SQL used `d.district_id` where the column is `d.id`, supplied extra bind parameters for national queries, and leaked sibling districts through an ancestor collection.
+- Repairs: per-installation transaction advisory lock, predecessor/successor numeric checks, strict input normalization, explicit number output, required JWT claims/type, current identity/version/jurisdiction verification, and focused hierarchy query corrections. Preserved immutable-history DB privileges and triggers.
+- Contract decision: retained the root-based paths already discussed/implemented, canonical `/readings/{id}`, and separate `/overview`; reconciled the earlier proposed naming in API_DESIGN.md. Conditional validators remain Stage 6.
+- Verification: `npm run check` passed TypeScript, 122 unit/HTTP tests and build; real PostgreSQL suite passed 81 tests. See Stage 5 evidence. Initial sandbox runs were blocked with local-socket EPERM and were rerun with the environment's required approval. Fixed TypeScript header-nullability assertions in the new tests; no application checks were weakened.
+- Student checkpoint: explain why 110 fits between 100 and 120; why late receipt does not make an older observation the latest; why concurrent conflicting inserts cannot both succeed; and why a device gets a Location without permission to GET it.
+- Limits: public deployment, rate limiting/production secret provisioning, conditional responses and historical collection reads remain pending. Report prose and viva explanation remain the student's work.
+
 ## Subsequent entry template
 
 - Date / tool and model identifier if known:

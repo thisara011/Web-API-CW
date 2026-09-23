@@ -22,17 +22,17 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | --- | --- | --- | --- | --- |
 | M01 | Model hierarchy and User before implementation | B p4; R p2 | ER diagram agrees with migrations and FK tests | Schema implemented; hierarchy/FK tests pass |
 | M02 | Meter/inverter identifier is an installation attribute | B p4; R p2 | No separate Device domain entity | Implemented on installation; unique meter constraint tested |
-| M03 | Readings are an append-only historical entity | B p4; R p2 | Retained history; API/runtime DB reject mutation | Database triggers/privileges tested; business API pending |
-| M04 | Reading carries installation, timestamp, kW, cumulative kWh, voltage | B p4 | Schema and OpenAPI validations | Schema implemented and tested; business OpenAPI pending |
+| M03 | Readings are an append-only historical entity | B p4; R p2 | Retained history; API/runtime DB reject mutation | Implemented: DB triggers/privileges and HTTP 405 mutation rejection tested |
+| M04 | Reading carries installation, timestamp, kW, cumulative kWh, voltage | B p4 | Schema and OpenAPI validations | Implemented: schema, HTTP validation and OpenAPI reading contract |
 | D01 | 9 provinces and 25 districts | B p5 | Seed verifier and authoritative mapping reference | Implemented/verified: 9 and 25 synthetic records |
 | D02 | At least 20 substations and 200 installations | B p5 | Plan uses 25 substations and 200 installations; FK audit | Implemented/verified: 25 and 200 records |
 | D03 | At least a week per installation at a fixed reporting interval | B p5 | Per-installation count/time-span verification and seed manifest | Implemented/verified: 673 readings/site at 15-minute intervals |
 | D04 | Plausible day/night shape | B p5 | Inspect daytime/nighttime samples and counter progression | Implemented/tested; synthetic, not live telemetry |
-| A01 | Atomic and collection hierarchy resources, with appropriate nesting | B p5; R p2 | Scoped HTTP examples and parent mismatch tests | Planned |
-| A02 | Installation composite resource | B p5; R p3 | Overview contains site, hierarchy and most recent reading without full history | Planned |
-| A03 | Last-known-reading derived resource | B pp5–6 | Latest by observation timestamp; handles absent history | Planned |
-| A04 | Per-installation readings subcollection and atomic read | B p5 | Historical page and Location target retrieval by authorized analyst | Planned |
-| A05 | Device ingestion creates a resource using correct method and headers | B p5; R p2 | POST returns 201, Location, JSON and validators | Planned |
+| A01 | Atomic and collection hierarchy resources, with appropriate nesting | B p5; R p2 | Scoped HTTP examples and parent mismatch tests | Hierarchy implemented; district scope regressions covered; root directories/pagination remain pending |
+| A02 | Installation composite resource | B p5; R p3 | Overview contains site, hierarchy and most recent reading without full history | Implemented/tested: scoped overview, safe hierarchy and nullable latest reading |
+| A03 | Last-known-reading derived resource | B pp5–6 | Latest by observation timestamp; handles absent history | Implemented/tested: event-time ordering, late arrivals and empty-site 404 |
+| A04 | Per-installation readings subcollection and atomic read | B p5 | Historical page and Location target retrieval by authorized analyst | Atomic /readings/{id} implemented; historical subcollection GET remains Stage 6 |
+| A05 | Device ingestion creates a resource using correct method and headers | B p5; R p2 | POST returns 201, Location, JSON and validators | 201, JSON, Location and Content-Location implemented; validators Stage 6 |
 | A06 | Full CRUD on an appropriate writable resource | B p5; R p3 | Agreed mutable resource; real create/read/update/delete tests | Open: D1 |
 | A07 | Consistent nouns, lowercase/hyphens, plural collections | R p2; B p9 | OpenAPI path audit against model and guideline differences | Planned |
 | A08 | Correct update/idempotency semantics | B p5; R p2 | PUT complete replacement if adopted; explicit partial-update contract; repeat-request checks | Open: D1 |
@@ -43,16 +43,16 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | Q03 | Timestamp sorting ascending and descending | B p5; R p3 | Stable ordering and tie-breaking tests | Planned |
 | Q04 | Conditional GET; 304 has empty body | B p6; R p3 | ETag/date tests on atomic, collection, composite and derived responses | Planned |
 | Q05 | District generation summary | B p6; R p3 | Verified power and daily-energy arithmetic, coverage and jurisdiction tests | Planned for First band |
-| E01 | One client-error body contract with code, message and detail | B p6; R p3 | Validation, parser, auth, not-found and method errors use same schema | Foundation implemented/tested; auth and domain errors pending |
-| S01 | Device authenticates as one installation; can only append its readings | B pp3–4,6; R p5 | Wrong installation and analyst-write attempts denied | Authentication implemented; append endpoint pending Stage 5 |
-| S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Planned |
+| E01 | One client-error body contract with code, message and detail | B p6; R p3 | Validation, parser, auth, not-found and method errors use same schema | Implemented across current parser, auth, reading validation/conflict and method errors |
+| S01 | Device authenticates as one installation; can only append its readings | B pp3–4,6; R p5 | Wrong installation and analyst-write attempts denied | Implemented/tested: owning-device append, analyst writes and wrong-device writes denied |
+| S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for current hierarchy and reading resources; future counts/links/aggregates/cache tests pending |
 | S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Implemented/tested for signed JWTs and scope gates |
 | S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Implemented: scope gate plus jurisdiction SQL predicate |
 | O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Planned |
-| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Foundation served locally; business documentation and public deployment pending |
+| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local Swagger documents current security and readings; public deployment pending |
 | O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Planned |
-| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–2 log maintained |
-| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–2 findings/repairs recorded; student explanation pending |
+| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–5 log maintained |
+| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–5 findings/repairs recorded; student explanation pending |
 | P01 | Report has six required sections and 2250–2750 words | B p7; R p5 | Student-authored final document and word count | Planned |
 | P02 | Signed declaration plus AI appendix | B pp6–8; R pp5–6 | Actual signed declaration and complete appendix | Planned |
 | P03 | Accurate Level 2 evaluation and Level 3 gap | B pp3,7; R p5 | Concrete deployed resource/method/status examples; honest limitation | Planned |

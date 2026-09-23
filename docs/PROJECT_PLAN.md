@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026; updated: 22 September 2026. Status: Stages 1–4 implemented and locally verified. Reading ingestion and analytical API features remain planned. See the README and stage evidence for setup and results.
+Prepared: 21 September 2026; updated: 23 September 2026. Status: Stages 1–5 implemented and locally verified. Historical queries, conditional responses and analytical summaries remain planned. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -166,6 +166,8 @@ Stage 2 implementation note: the six domain tables, foreign keys, role/jurisdict
 Stage 3 implementation note: a deterministic generator now produces the required 9 provinces, 25 districts, 25 substations, 200 installations and 134,600 readings. It records a seed manifest and refuses to mix itself with unknown existing domain data. The fixed August 2026 historical dataset is intentionally reproducible; a later operational catch-up/demo ingestion process is still needed before public marking so “latest” data is not presented as live.
 
 Stage 4 implementation note: `/auth/token` verifies scrypt credential hashes and issues short-lived HS256 JWTs with issuer, audience, principal type, scopes, credential version and jurisdiction claims. Geography and installation hierarchy routes apply both the `geography:read` scope and a national/provincial/district SQL predicate. A device has only `readings:write`, ready for Stage 5. The seeded credentials are explicitly public local fixtures, not deployment credentials.
+
+Stage 5 implementation note: device-owned POST, atomic reading GET, latest-reading and overview are implemented. Counter validation checks immediate event-time neighbours inside a per-installation advisory-lock transaction; runtime privileges stay SELECT/INSERT only. Input validation rejects extra precision, spoofed ownership, invalid/future timestamps and pre-commission observations. JWT use rechecks active identity and credential version; analyst jurisdiction must still match stored scope. See [Stage 5 evidence](evidence/STAGE_5.md). Existing root-based URI names are retained and the design differences recorded in API_DESIGN.md; conditional validators remain Stage 6.
 
 ## 7. Verification and evidence strategy
 
