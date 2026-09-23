@@ -7,15 +7,15 @@ export interface Reading {
   id: string; installationId: string; timestamp: Date; powerKw: number;
   cumulativeEnergyKwh: number; voltage: number; receivedAt: Date;
 }
-const readingColumns = `r.id, r.installation_id AS "installationId", r.timestamp,
+export const readingColumns = `r.id, r.installation_id AS "installationId", r.timestamp,
   r.power_kw::float8 AS "powerKw", r.cumulative_energy_kwh::float8 AS "cumulativeEnergyKwh",
   r.voltage::float8 AS voltage, r.received_at AS "receivedAt"`;
-const hierarchy = `FROM solar_installations i
+export const hierarchy = `FROM solar_installations i
   JOIN grid_substations s ON s.id = i.grid_substation_id
   JOIN districts d ON d.id = s.district_id
   JOIN provinces p ON p.id = d.province_id`;
 
-function analystFilter(principal: Principal) {
+export function analystFilter(principal: Principal) {
   if (principal.kind !== 'analyst') throw new ApiError(403, 40301, 'Analyst access is required');
   if (principal.role === 'national') return { sql: 'TRUE', values: [] as string[] };
   return principal.role === 'provincial'
@@ -91,6 +91,7 @@ export class ReadingService {
     const filter = analystFilter(principal);
     // A single statement supplies a consistent snapshot of metadata and latest.
     const result = await this.pool.query(`SELECT
+      GREATEST(i.updated_at, p.updated_at, d.updated_at, s.updated_at, r.received_at) AS "__modified",
       jsonb_build_object('id', i.id, 'meterId', i.meter_id, 'siteLabel', i.site_label,
         'capacityKw', i.capacity_kw, 'commissionedDate', i.commissioned_date,
         'isActive', i.is_active, 'gridSubstationId', i.grid_substation_id) AS installation,
@@ -105,6 +106,7 @@ export class ReadingService {
         ORDER BY timestamp DESC, id DESC LIMIT 1) r ON true
       WHERE ${filter.sql} AND i.id = $${filter.values.length + 1}`, [...filter.values, installationId]);
     if (!result.rows[0]) throw missing();
-    return result.rows[0];
+    const { __modified: modified, ...body } = result.rows[0];
+    return { body, modified: modified as Date };
   }
 }

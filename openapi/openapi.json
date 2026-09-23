@@ -3,7 +3,7 @@
   "info": {
     "title": "SLSEA Solar Generation API",
     "version": "0.1.0",
-    "description": "SLSEA Solar Generation API, Stages 1\u20135. Public health and OpenAPI; JWT-protected hierarchy, device-owned append-only readings, analyst atomic/latest/overview reads. Current routes are relative to the host root. Authenticated responses use Cache-Control: no-store; conditional validators and historical collections are planned for Stage 6."
+    "description": "SLSEA Solar Generation API, Stages 1\u20136. Public health and OpenAPI; JWT-protected hierarchy, immutable ingestion, scoped history and operational reads. Current paths are relative to the host root. GET/HEAD business representations support authorized ETag revalidation. Deployment and district summaries remain planned."
   },
   "servers": [
     {
@@ -286,7 +286,44 @@
             "bearerAuth": []
           }
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Authorized resource representation.",
@@ -295,6 +332,23 @@
                 "schema": {
                   "$ref": "#/components/schemas/Collection"
                 }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
               }
             }
           },
@@ -306,8 +360,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/provinces/{provinceId}": {
@@ -330,6 +411,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -351,6 +468,23 @@
                   "additionalProperties": true
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -361,8 +495,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/provinces/{provinceId}/districts": {
@@ -385,6 +546,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -396,6 +593,23 @@
                   "$ref": "#/components/schemas/Collection"
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -406,8 +620,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/districts/{districtId}": {
@@ -430,6 +671,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -451,6 +728,23 @@
                   "additionalProperties": true
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -461,8 +755,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/districts/{districtId}/substations": {
@@ -485,6 +806,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -496,6 +853,23 @@
                   "$ref": "#/components/schemas/Collection"
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -506,8 +880,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/substations/{substationId}": {
@@ -530,6 +931,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -551,6 +988,23 @@
                   "additionalProperties": true
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -561,8 +1015,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/substations/{substationId}/installations": {
@@ -585,6 +1066,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -596,6 +1113,23 @@
                   "$ref": "#/components/schemas/Collection"
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -606,8 +1140,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/installations/{installationId}": {
@@ -630,6 +1191,42 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -651,6 +1248,23 @@
                   "additionalProperties": true
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
             }
           },
           "401": {
@@ -661,8 +1275,35 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
           }
-        }
+        },
+        "description": " GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock."
       }
     },
     "/installations/{installationId}/readings": {
@@ -672,7 +1313,7 @@
           "Readings"
         ],
         "summary": "Append a reading for the authenticated installation",
-        "description": "Requires readings:write, an active installation principal matching the URL, and current credential version. Unknown fields and excessive precision return 40002. Repeated timestamps return 40901; inconsistent cumulative counters return 40902. Per-installation transaction locks serialize API ingestion. Meter resets are unsupported. Devices receive the created representation but cannot GET Location with a device token. GET history arrives in Stage 6; currently Allow is POST, OPTIONS.",
+        "description": "Requires readings:write, an active installation principal matching the URL, and current credential version. Unknown fields and excessive precision return 40002. Repeated timestamps return 40901; inconsistent cumulative counters return 40902. Per-installation transaction locks serialize API ingestion. Meter resets are unsupported. Devices receive the created representation but cannot GET Location with a device token. GET history is available to analysts; Allow is GET, HEAD, POST, OPTIONS. Conditional headers are supported on GET/HEAD, not this ingestion operation.",
         "security": [
           {
             "bearerAuth": []
@@ -720,6 +1361,12 @@
                   "type": "string"
                 },
                 "description": "URI of this representation."
+              },
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
               }
             },
             "content": {
@@ -761,6 +1408,232 @@
             "$ref": "#/components/responses/ReadingConflict"
           }
         }
+      },
+      "get": {
+        "operationId": "getInstallationReadings",
+        "tags": [
+          "Readings"
+        ],
+        "summary": "Read authorized historical observations",
+        "description": "Requires installation:read and an active analyst. Count and page use one REPEATABLE READ snapshot. Unknown/repeated parameters return 400. Empty results and beyond-end offsets return 200. Regional hidden/nonexistent filters produce an empty page; a hidden/nonexistent nested installation returns 404. Offset pages can shift between requests; a fixed time window still permits late-arriving backfill. GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "installationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "province-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "district-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "substation-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "installation-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive observation-time bound. Include a timezone; encode + as %2B. At most three fractional digits. from must be before to.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Exclusive observation-time bound. Include a timezone; encode + as %2B. At most three fractional digits. from must be before to.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "timestamp",
+                "-timestamp"
+              ],
+              "default": "-timestamp"
+            },
+            "description": "Timestamp followed by UUID tie-breaker, both in the selected direction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized filtered page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingPage"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
       }
     },
     "/readings/{readingId}": {
@@ -770,7 +1643,7 @@
           "Readings"
         ],
         "summary": "Retrieve an immutable reading",
-        "description": "Requires installation:read and an active analyst whose current stored role and jurisdiction match the JWT. Out-of-scope and absent readings return 404. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405.",
+        "description": "Requires installation:read and an active analyst whose current stored role and jurisdiction match the JWT. Out-of-scope and absent readings return 404. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405. GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock.",
         "security": [
           {
             "bearerAuth": []
@@ -785,17 +1658,65 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Authorized representation.",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
               },
-              "Cache-Control": {
-                "$ref": "#/components/headers/NoStore"
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
               }
             },
             "content": {
@@ -832,6 +1753,32 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
           }
         }
       }
@@ -843,7 +1790,7 @@
           "Readings"
         ],
         "summary": "Retrieve the latest observation",
-        "description": "Latest is selected by observation timestamp and id tie-breaker. Late arrivals cannot replace a newer observation. Empty, absent and hidden installations return 404. Latest does not imply fresh or live. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405.",
+        "description": "Latest is selected by observation timestamp and id tie-breaker. Late arrivals cannot replace a newer observation. Empty, absent and hidden installations return 404. Latest does not imply fresh or live. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405. GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock.",
         "security": [
           {
             "bearerAuth": []
@@ -858,17 +1805,65 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Authorized representation.",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
               },
-              "Cache-Control": {
-                "$ref": "#/components/headers/NoStore"
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
               }
             },
             "content": {
@@ -905,6 +1900,32 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
           }
         }
       }
@@ -916,7 +1937,7 @@
           "Readings"
         ],
         "summary": "Retrieve installation, hierarchy and latest reading",
-        "description": "One scoped SQL snapshot returns safe installation metadata, ancestor references and lastKnownReading (null for an empty site). No unbounded history or credentials are returned. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405.",
+        "description": "One scoped SQL snapshot returns safe installation metadata, ancestor references and lastKnownReading (null for an empty site). No unbounded history or credentials are returned. HEAD returns headers without a body; OPTIONS advertises GET, HEAD, OPTIONS. PUT, PATCH and DELETE return 405. GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock.",
         "security": [
           {
             "bearerAuth": []
@@ -931,17 +1952,65 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "Authorized representation.",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
               "X-Request-Id": {
                 "$ref": "#/components/headers/RequestId"
               },
-              "Cache-Control": {
-                "$ref": "#/components/headers/NoStore"
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
               }
             },
             "content": {
@@ -978,6 +2047,251 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      }
+    },
+    "/readings": {
+      "get": {
+        "operationId": "getRegionalReadings",
+        "tags": [
+          "Readings"
+        ],
+        "summary": "Read authorized historical observations",
+        "description": "Requires installation:read and an active analyst. Count and page use one REPEATABLE READ snapshot. Unknown/repeated parameters return 400. Empty results and beyond-end offsets return 200. Regional hidden/nonexistent filters produce an empty page; a hidden/nonexistent nested installation returns 404. Offset pages can shift between requests; a fixed time window still permits late-arriving backfill. GET supports bodyless HEAD. Hierarchy resources use ETags; no Last-Modified is invented for directories lacking a complete membership-change clock.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "province-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "district-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "substation-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "installation-id",
+            "in": "query",
+            "description": "Optional exact UUID filter, ANDed with every other filter and the authenticated jurisdiction.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Inclusive observation-time bound. Include a timezone; encode + as %2B. At most three fractional digits. from must be before to.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Exclusive observation-time bound. Include a timezone; encode + as %2B. At most three fractional digits. from must be before to.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "timestamp",
+                "-timestamp"
+              ],
+              "default": "-timestamp"
+            },
+            "description": "Timestamp followed by UUID tie-breaker, both in the selected direction."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized filtered page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingPage"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "304": {
+            "description": "Authorized representation unchanged; no body. Validators and cache headers are retained. Empty histories may omit Last-Modified.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "Last-Modified": {
+                "$ref": "#/components/headers/RepresentationModified"
+              }
+            }
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
           }
         }
       }
@@ -1009,6 +2323,26 @@
           "type": "string"
         },
         "example": "GET, HEAD, OPTIONS"
+      },
+      "RepresentationTag": {
+        "description": "Strong SHA-256 validator of the serialized representation. Mutable views include URL and jurisdiction context. Authorization is always checked before preconditions.",
+        "schema": {
+          "type": "string",
+          "pattern": "^\"[a-f0-9]{64}\"$"
+        }
+      },
+      "RepresentationModified": {
+        "description": "HTTP-date from stored receipt/modification times, not observation time. Milliseconds are retained internally for conservative date comparisons.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "PrivateRevalidation": {
+        "description": "Private caches must revalidate authenticated representations.",
+        "schema": {
+          "type": "string",
+          "const": "private, no-cache"
+        }
       }
     },
     "schemas": {
@@ -1385,6 +2719,54 @@
             ]
           }
         }
+      },
+      "ReadingPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data",
+          "count",
+          "offset",
+          "limit",
+          "next",
+          "previous"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reading"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total authorized and filtered count, independent of page length."
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative next-page URL retaining all validated filters and sort."
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Relative previous-page URL; beyond-end pages link to the final valid page."
+          }
+        }
       }
     },
     "responses": {
@@ -1580,6 +2962,21 @@
                 }
               }
             }
+          }
+        }
+      },
+      "PreconditionFailed": {
+        "description": "41201: a strong If-Match or applicable If-Unmodified-Since precondition failed after authentication, authorization and resource lookup.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        },
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/NoStore"
           }
         }
       }

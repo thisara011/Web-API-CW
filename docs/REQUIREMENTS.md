@@ -31,28 +31,28 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | A01 | Atomic and collection hierarchy resources, with appropriate nesting | B p5; R p2 | Scoped HTTP examples and parent mismatch tests | Hierarchy implemented; district scope regressions covered; root directories/pagination remain pending |
 | A02 | Installation composite resource | B p5; R p3 | Overview contains site, hierarchy and most recent reading without full history | Implemented/tested: scoped overview, safe hierarchy and nullable latest reading |
 | A03 | Last-known-reading derived resource | B pp5–6 | Latest by observation timestamp; handles absent history | Implemented/tested: event-time ordering, late arrivals and empty-site 404 |
-| A04 | Per-installation readings subcollection and atomic read | B p5 | Historical page and Location target retrieval by authorized analyst | Atomic /readings/{id} implemented; historical subcollection GET remains Stage 6 |
-| A05 | Device ingestion creates a resource using correct method and headers | B p5; R p2 | POST returns 201, Location, JSON and validators | 201, JSON, Location and Content-Location implemented; validators Stage 6 |
+| A04 | Per-installation readings subcollection and atomic read | B p5 | Historical page and Location target retrieval by authorized analyst | Implemented/tested: nested history page and canonical atomic Location retrieval |
+| A05 | Device ingestion creates a resource using correct method and headers | B p5; R p2 | POST returns 201, Location, JSON and validators | Implemented/tested: 201, JSON, Location, Content-Location, ETag and Last-Modified |
 | A06 | Full CRUD on an appropriate writable resource | B p5; R p3 | Agreed mutable resource; real create/read/update/delete tests | Open: D1 |
 | A07 | Consistent nouns, lowercase/hyphens, plural collections | R p2; B p9 | OpenAPI path audit against model and guideline differences | Planned |
 | A08 | Correct update/idempotency semantics | B p5; R p2 | PUT complete replacement if adopted; explicit partial-update contract; repeat-request checks | Open: D1 |
-| A09 | Deliberate 200, 201, 400, 404, 406 and 412 | B p9; R p2 | Positive and negative integration scenarios | Planned |
-| A10 | Location, ETag, Last-Modified and Content-Type | B p9; R p2 | Header assertions on applicable responses | Planned |
-| Q01 | Pagination with total count, next and previous links | B p5; R p3 | First/middle/final/empty page checks; filter-preserving links | Planned |
-| Q02 | Filtering by province, district, substation and time | B p5; R p3 | Multi-installation analytical queries with authorized regional filters | Planned |
-| Q03 | Timestamp sorting ascending and descending | B p5; R p3 | Stable ordering and tie-breaking tests | Planned |
-| Q04 | Conditional GET; 304 has empty body | B p6; R p3 | ETag/date tests on atomic, collection, composite and derived responses | Planned |
+| A09 | Deliberate 200, 201, 400, 404, 406 and 412 | B p9; R p2 | Positive and negative integration scenarios | Implemented/tested for current routes including 304/406/412; mutable CRUD remains D1 |
+| A10 | Location, ETag, Last-Modified and Content-Type | B p9; R p2 | Header assertions on applicable responses | Implemented: ETag on current business reads, Last-Modified where tracked; hierarchy directories omit date validators |
+| Q01 | Pagination with total count, next and previous links | B p5; R p3 | First/middle/final/empty page checks; filter-preserving links | Implemented/tested for reading histories: scoped count, stable pages and preserved links |
+| Q02 | Filtering by province, district, substation and time | B p5; R p3 | Multi-installation analytical queries with authorized regional filters | Implemented/tested: intersected region/installation filters and half-open time bounds |
+| Q03 | Timestamp sorting ascending and descending | B p5; R p3 | Stable ordering and tie-breaking tests | Implemented/tested: timestamp and UUID tie-breaker in both directions |
+| Q04 | Conditional GET; 304 has empty body | B p6; R p3 | ETag/date tests on atomic, collection, composite and derived responses | Implemented/tested: authorized bodyless 304 across resource types; conservative date policy documented |
 | Q05 | District generation summary | B p6; R p3 | Verified power and daily-energy arithmetic, coverage and jurisdiction tests | Planned for First band |
 | E01 | One client-error body contract with code, message and detail | B p6; R p3 | Validation, parser, auth, not-found and method errors use same schema | Implemented across current parser, auth, reading validation/conflict and method errors |
 | S01 | Device authenticates as one installation; can only append its readings | B pp3–4,6; R p5 | Wrong installation and analyst-write attempts denied | Implemented/tested: owning-device append, analyst writes and wrong-device writes denied |
-| S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for current hierarchy and reading resources; future counts/links/aggregates/cache tests pending |
+| S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for hierarchy/readings, history count/link boundaries and conditional requests; summary authorization pending |
 | S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Implemented/tested for signed JWTs and scope gates |
 | S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Implemented: scope gate plus jurisdiction SQL predicate |
 | O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Planned |
-| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local Swagger documents current security and readings; public deployment pending |
+| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local OpenAPI documents history and conditional behavior; public deployment pending |
 | O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Planned |
-| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–5 log maintained |
-| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–5 findings/repairs recorded; student explanation pending |
+| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–6 log maintained |
+| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–6 decisions/findings recorded; student explanation pending |
 | P01 | Report has six required sections and 2250–2750 words | B p7; R p5 | Student-authored final document and word count | Planned |
 | P02 | Signed declaration plus AI appendix | B pp6–8; R pp5–6 | Actual signed declaration and complete appendix | Planned |
 | P03 | Accurate Level 2 evaluation and Level 3 gap | B pp3,7; R p5 | Concrete deployed resource/method/status examples; honest limitation | Planned |

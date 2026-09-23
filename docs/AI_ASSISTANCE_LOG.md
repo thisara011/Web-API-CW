@@ -91,6 +91,17 @@ This is a working disclosure record, not a substitute for the report appendix or
 - Student checkpoint: explain why 110 fits between 100 and 120; why late receipt does not make an older observation the latest; why concurrent conflicting inserts cannot both succeed; and why a device gets a Location without permission to GET it.
 - Limits: public deployment, rate limiting/production secret provisioning, conditional responses and historical collection reads remain pending. Report prose and viva explanation remain the student's work.
 
+## Entry 007 — Stage 6 history and conditional HTTP
+
+- Date: 23 September 2026; tool: Codex (GPT-6).
+- User prompt: “lets complte it”, following the completed Stage 5 and Stage 6 proposal.
+- Artifacts: strict history query parser, scoped SQL history with snapshot/count/page, filter-preserving links, shared conditional-response helper, hierarchy modification-time migration, OpenAPI and regression tests.
+- Decisions: keep current root routes and add regional/nested histories. Apply predicates before aggregates and page selection. Use REPEATABLE READ for a consistent count/page/parent snapshot. Strong ETags hash the actual serialized body; mutable views also include URL and jurisdiction. Do not claim date-only freshness for mutable views with second-resolution HTTP dates.
+- Actual review findings: ordinary Express JSON sending would run its own freshness check after our precondition logic. The new helper writes the selected body directly so date ambiguity and If-Match precedence cannot be overridden. Ancestor metadata had no modification timestamp; migration 003 adds one without inventing historical dates. Fixed the new entity-tag parser to accept trailing optional whitespace after a quoted tag during review.
+- Verification: final complete check passed 157 unit/HTTP tests (including the updated Swagger contract), typecheck/build, and 88 real PostgreSQL tests; `git diff --check` passed. Results are recorded in Stage 6 evidence. Tests use the existing isolated schema/runtime-role harness and remove fixtures afterward.
+- Student checkpoint: explain why an unauthorized matching ETag cannot produce 304; compare weak If-None-Match with strong If-Match; trace a half-open time filter and scoped count; demonstrate why a late off-page reading changes the page count/tag.
+- Limits: offset pagination is not a cross-request snapshot, and a fixed event-time window still permits backfill. Directory Last-Modified dates are omitted where a complete membership clock is absent. District summaries, deployment, production hardening and the unresolved CRUD interpretation remain pending.
+
 ## Subsequent entry template
 
 - Date / tool and model identifier if known:

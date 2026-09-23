@@ -208,3 +208,148 @@ describe('immutable reading HTTP workflow with restricted database permissions',
     expect((await get(`/districts/${d2}`, district)).status).toBe(404);
   });
 });
+
+
+describe('history filters, pagination and authorized HTTP validators', () => {
+  it('intersects every regional filter with jurisdiction before counts and paging', async () => {
+    const a = await installation(s1), b = await installation(s2), c = await installation(s3);
+    for (const [site, count] of [[a, 3], [b, 2], [c, 1]] as const) {
+      for (let hour = 0; hour < count; hour++) expect((await append(site, `2026-06-01T0${hour}:00:00Z`, 100 + hour)).status).toBe(201);
+    }
+    const range = 'from=2026-06-01T00%3A00%3A00Z&to=2026-06-02T00%3A00%3A00Z';
+    for (const [token, count] of [[national, 6], [provincial, 5], [district, 3], [foreign, 1]] as const) {
+      const page = await get(`/readings?${range}&limit=1`, token);
+      expect(page.status).toBe(200); expect(page.body.count).toBe(count); expect(page.body.data).toHaveLength(1);
+    }
+    const filtered = await get(`/readings?${range}&province-id=${p1}&district-id=${d1}&substation-id=${s1}&installation-id=${a.id}`, district);
+    expect(filtered.body.count).toBe(3);
+    expect(filtered.body.data.every((row: { installationId: string }) => row.installationId === a.id)).toBe(true);
+    for (const filter of [`province-id=${p2}`, `district-id=${d2}`, `substation-id=${s2}`, `installation-id=${b.id}`, `installation-id=${randomUUID()}`]) {
+      const empty = await get(`/readings?${range}&${filter}`, district);
+      expect(empty.status).toBe(200); expect(empty.body).toMatchObject({ count: 0, data: [], next: null, previous: null });
+    }
+    const incompatible = await get(`/readings?${range}&province-id=${p2}&district-id=${d1}`);
+    expect(incompatible.body.count).toBe(0);
+    const asc = await get(`/readings?${range}&sort=timestamp`);
+    const desc = await get(`/readings?${range}&sort=-timestamp`);
+    const sorted = [...asc.body.data].sort((x, y) => x.timestamp.localeCompare(y.timestamp) || x.id.localeCompare(y.id));
+    expect(asc.body.data).toEqual(sorted);
+    expect(desc.body.data.map((r: { id: string }) => r.id)).toEqual(asc.body.data.map((r: { id: string }) => r.id).reverse());
+  });
+
+  it('paginates first/middle/last/beyond-end pages and preserves half-open time bounds', async () => {
+    const site = await installation();
+    for (let hour = 0; hour < 5; hour++) await append(site, `2026-07-01T0${hour}:00:00Z`, 100 + hour);
+    const path = `/installations/${site.id}/readings`;
+    const first = await get(`${path}?sort=timestamp&limit=2&from=2026-07-01T00%3A00%3A00Z&to=2026-07-01T04%3A00%3A00Z`);
+    expect(first.body).toMatchObject({ count: 4, offset: 0, limit: 2, previous: null });
+    expect(first.body.data.map((r: { cumulativeEnergyKwh: number }) => r.cumulativeEnergyKwh)).toEqual([100, 101]);
+    const next = await get(first.body.next);
+    expect(next.body).toMatchObject({ count: 4, offset: 2, limit: 2, next: null });
+    expect(next.body.data.map((r: { cumulativeEnergyKwh: number }) => r.cumulativeEnergyKwh)).toEqual([102, 103]);
+    expect((await get(next.body.previous)).body).toEqual(first.body);
+    const beyond = await get(`${path}?limit=2&offset=100`);
+    expect(beyond.body).toMatchObject({ count: 5, data: [], offset: 100, next: null });
+    expect((await get(beyond.body.previous)).body.data).toHaveLength(1);
+    expect((await get(`${path}?from=2026-07-01T05%3A30%3A00%2B05%3A30&to=2026-07-01T06%3A30%3A00%2B05%3A30`)).body.count).toBe(1);
+    const empty = await installation();
+    expect((await get(`/installations/${empty.id}/readings`)).body).toMatchObject({ data: [], count: 0 });
+    expect((await get(`${path}?installation-id=${empty.id}`)).body.count).toBe(0);
+    expect((await get(`/installations/${randomUUID()}/readings`)).status).toBe(404);
+    expect((await get(path, foreign)).status).toBe(404);
+    expect((await get('/readings', site.token)).status).toBe(403);
+  });
+
+  it('rejects invalid history parameters with the common JSON error contract', async () => {
+    for (const query of ['limit=0', 'offset=-1', 'limit=1&limit=2', 'from=invalid', 'sort=timestamp%3BDROP', 'district-id=invalid', 'unknown=true', 'from=2026-07-02T00:00:00Z&to=2026-07-01T00:00:00Z']) {
+      const response = await get(`/readings?${query}`);
+      expect(response.status).toBe(400); expect(response.body.error.code).toBe(40002);
+    }
+    const unacceptable = await get('/readings').set('Accept', 'application/json;q=0, text/html');
+    expect(unacceptable.status).toBe(406);
+    expect((await get('/readings').set('Accept', 'application/*')).status).toBe(200);
+  });
+
+  it('returns bodyless 304 and 412 in correct precedence for atomic, collection, composite and derived resources', async () => {
+    const site = await installation();
+    const created = await append(site, '2026-07-02T06:00:00Z', 100);
+    const paths = [created.headers.location!, `/installations/${site.id}/readings`, `/installations/${site.id}/overview`, `/installations/${site.id}/latest-reading`, '/provinces', `/installations/${site.id}`];
+    expect(created.headers.etag).toBe((await get(created.headers.location!)).headers.etag);
+    for (const path of paths) {
+      const full = await get(path);
+      expect(full.status).toBe(200); expect(full.headers.etag).toMatch(/^"[a-f0-9]{64}"$/);
+      expect(full.headers['cache-control']).toBe('private, no-cache');
+      expect(full.headers.vary).toContain('Authorization');
+      const unchanged = await get(path).set('If-None-Match', `"old", W/${full.headers.etag}`);
+      expect(unchanged.status).toBe(304); expect(unchanged.text).toBe(''); expect(unchanged.headers.etag).toBe(full.headers.etag);
+      expect(unchanged.headers['content-type']).toBeUndefined();
+      expect((await get(path).set('If-Match', '"stale"').set('If-None-Match', '*')).status).toBe(412);
+      expect((await get(path).set('If-Match', `W/${full.headers.etag}`)).status).toBe(412);
+      expect((await get(path).set('If-Match', '*')).status).toBe(200);
+      expect((await get(path).set('If-None-Match', '*')).status).toBe(304);
+      const head = await request(app).head(path).auth(national, { type: 'bearer' }).set('If-None-Match', full.headers.etag!);
+      expect(head.status).toBe(304); expect(head.text).toBeUndefined();
+    }
+    const invalid = await get(created.headers.location!).set('If-None-Match', 'malformed');
+    expect(invalid.status).toBe(400);
+    const precondition = await get(created.headers.location!).set('If-Match', '"stale"');
+    expect(precondition.headers['cache-control']).toBe('no-store'); expect(precondition.headers.etag).toBeUndefined();
+  });
+
+  it('never treats unauthorized, missing, revoked or unacceptable responses as cache hits', async () => {
+    const site = await installation();
+    const created = await append(site, '2026-07-03T06:00:00Z', 100);
+    const path = created.headers.location!;
+    const full = await get(path);
+    expect((await request(app).get(path).set('If-None-Match', '*')).status).toBe(401);
+    expect((await get(path, foreign).set('If-None-Match', full.headers.etag!)).status).toBe(404);
+    expect((await get(path, site.token).set('If-None-Match', '*')).status).toBe(403);
+    expect((await get(`/readings/${randomUUID()}`).set('If-Match', '*')).status).toBe(404);
+    expect((await get(path).set('Accept', 'text/html').set('If-None-Match', '*')).status).toBe(406);
+    const user = await analyst('national');
+    await owner.query('UPDATE users SET credential_version=2 WHERE id=$1', [user.id]);
+    expect((await get(path, user.token).set('If-None-Match', '*')).status).toBe(401);
+    const nested = `/installations/${site.id}/readings`;
+    expect((await get(nested, foreign).set('If-None-Match', '*')).status).toBe(404);
+  });
+
+  it('invalidates page counts on off-page arrivals, changes latest on newer observations, and tracks composite metadata', async () => {
+    const site = await installation();
+    await append(site, '2026-07-04T06:00:00Z', 100);
+    const newest = await append(site, '2026-07-04T08:00:00Z', 120);
+    const path = `/installations/${site.id}/readings?limit=1`;
+    const first = await get(path);
+    const latestPath = `/installations/${site.id}/latest-reading`;
+    const latest = await get(latestPath);
+    await append(site, '2026-07-04T07:00:00Z', 110);
+    const changed = await get(path).set('If-None-Match', first.headers.etag!);
+    expect(changed.status).toBe(200); expect(changed.body.count).toBe(3);
+    expect(changed.body.data[0].id).toBe(newest.body.id);
+    expect((await get(latestPath).set('If-None-Match', latest.headers.etag!)).status).toBe(304);
+    await append(site, '2026-07-04T09:00:00Z', 130);
+    expect((await get(latestPath).set('If-None-Match', latest.headers.etag!)).status).toBe(200);
+    const overviewPath = `/installations/${site.id}/overview`;
+    const before = await get(overviewPath);
+    await owner.query("UPDATE provinces SET name='Western renamed for validation' WHERE id=$1", [p1]);
+    const after = await get(overviewPath).set('If-None-Match', before.headers.etag!);
+    expect(after.status).toBe(200); expect(after.body.hierarchy.province.name).toBe('Western renamed for validation');
+    expect(after.headers['last-modified']).toBeDefined();
+    expect(JSON.stringify(after.body)).not.toContain('__modified');
+  });
+
+  it('handles receipt dates conservatively and gives entity tags precedence over dates', async () => {
+    const site = await installation();
+    const id = randomUUID();
+    // A deterministic historical receipt instant permits date tests without sleeps.
+    await owner.query('INSERT INTO generation_readings (id,installation_id,timestamp,power_kw,cumulative_energy_kwh,voltage,received_at) VALUES ($1,$2,$3,1,100,230,$4)', [id,site.id,'2026-07-05T06:00:00Z','2026-07-06T06:00:00.123Z']);
+    const path = `/readings/${id}`;
+    const full = await get(path);
+    expect(full.headers['last-modified']).toBe('Mon, 06 Jul 2026 06:00:00 GMT');
+    expect((await get(path).set('If-Modified-Since', full.headers['last-modified']!)).status).toBe(200);
+    expect((await get(path).set('If-Modified-Since', 'Mon, 06 Jul 2026 06:00:01 GMT')).status).toBe(304);
+    expect((await get(path).set('If-None-Match', '"other"').set('If-Modified-Since', 'Mon, 06 Jul 2026 07:00:00 GMT')).status).toBe(200);
+    expect((await get(path).set('If-Unmodified-Since', 'Mon, 06 Jul 2026 05:00:00 GMT')).status).toBe(412);
+    expect((await get(path).set('If-Match', full.headers.etag!).set('If-Unmodified-Since', 'Mon, 06 Jul 2026 05:00:00 GMT')).status).toBe(200);
+    expect((await get(`/installations/${site.id}/readings`).set('If-Modified-Since', 'Mon, 06 Jul 2026 07:00:00 GMT')).status).toBe(200);
+  });
+});

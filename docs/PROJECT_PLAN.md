@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026; updated: 23 September 2026. Status: Stages 1–5 implemented and locally verified. Historical queries, conditional responses and analytical summaries remain planned. See the README and stage evidence for setup and results.
+Prepared: 21 September 2026; updated: 23 September 2026. Status: Stages 1–6 implemented and locally verified. District summaries, mutable-resource clarification and deployment remain planned. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -168,6 +168,8 @@ Stage 3 implementation note: a deterministic generator now produces the required
 Stage 4 implementation note: `/auth/token` verifies scrypt credential hashes and issues short-lived HS256 JWTs with issuer, audience, principal type, scopes, credential version and jurisdiction claims. Geography and installation hierarchy routes apply both the `geography:read` scope and a national/provincial/district SQL predicate. A device has only `readings:write`, ready for Stage 5. The seeded credentials are explicitly public local fixtures, not deployment credentials.
 
 Stage 5 implementation note: device-owned POST, atomic reading GET, latest-reading and overview are implemented. Counter validation checks immediate event-time neighbours inside a per-installation advisory-lock transaction; runtime privileges stay SELECT/INSERT only. Input validation rejects extra precision, spoofed ownership, invalid/future timestamps and pre-commission observations. JWT use rechecks active identity and credential version; analyst jurisdiction must still match stored scope. See [Stage 5 evidence](evidence/STAGE_5.md). Existing root-based URI names are retained and the design differences recorded in API_DESIGN.md; conditional validators remain Stage 6.
+
+Stage 6 implementation note: installation/regional histories intersect validated region/time filters with analyst scope before count and paging. Count/page/parent checks use a REPEATABLE READ snapshot; offset links preserve filters and stable timestamp/UUID order. Shared conditional handling provides strong ETags, weak/strong comparison semantics, authorized bodyless 304, 412 and conservative date handling. Migration 003 tracks hierarchy changes used in overview modification dates. See [Stage 6 evidence](evidence/STAGE_6.md). Root hierarchy directories/pagination beyond the existing hierarchy surface remain a contract-audit item; this stage implements the planned historical collections. Stage 8 can proceed independently while Stage 7's D1 clarification remains open.
 
 ## 7. Verification and evidence strategy
 

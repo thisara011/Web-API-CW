@@ -2,7 +2,7 @@
 
 NB6007CEM Web API Development coursework: a REST API for installation-bound solar reading ingestion and jurisdiction-scoped operational and historical reads.
 
-**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Historical analytical endpoints remain planned.
+**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Stage 6 adds scoped history, pagination and conditional GET/HEAD. District summaries and deployment remain planned.
 
 ## Run locally
 
@@ -51,7 +51,7 @@ curl -i http://127.0.0.1:3000/health/ready
 curl -i -H 'Accept: application/xml' http://127.0.0.1:3000/health/live
 ```
 
-The last request demonstrates a JSON `406` error. All application responses include a server-generated `X-Request-Id`. Health probes use `no-store` and ignore conditional caching headers; conditional retrieval of business resources arrives in Stage 6.
+The last request demonstrates a JSON `406` error. All application responses include a server-generated `X-Request-Id`. Health probes use `no-store` and ignore conditional caching headers; business reads support authorized ETag revalidation.
 
 ## Reading workflow (Stage 5)
 
@@ -69,6 +69,31 @@ Use Swagger to obtain an analyst token, navigate to a substation's installations
 Successful POST returns `201`, the reading, and matching `Location`/`Content-Location` headers. Switch to the analyst token to GET that Location or the latest/overview resources. Devices receive the created representation but do not gain GET access. Retrying the timestamp returns `409`, even for an identical body. An empty site has `lastKnownReading: null` in its overview and `404` for latest-reading. Latest may be historical; the API does not claim it is live telemetry.
 
 See [Stage 5 verification](docs/evidence/STAGE_5.md) for the checks and counter/concurrency examples. Seed once before ingestion: the existing seed verifier requires exact manifest counts and will refuse a re-run after additional live readings are present; it never deletes them.
+
+## History and conditional requests (Stage 6)
+
+Run `npm run db:migrate` before starting this version. Migration 003 tracks hierarchy modification times used by overview responses; it preserves existing rows. No seed reset is needed.
+
+Analysts can GET `/readings` or `/installations/{installationId}/readings`. Supported query parameters are `province-id`, `district-id`, `substation-id`, `installation-id`, `from`, `to`, `sort`, `offset` and `limit`. All filters are ANDed with the authenticated jurisdiction. Unknown or repeated parameters return `400`.
+
+- `from` is inclusive and `to` exclusive; timestamps require a timezone. Encode `+` as `%2B` in URLs.
+- Sort is `timestamp` or `-timestamp` (default). UUID breaks ties in the same direction.
+- `offset` defaults to 0; `limit` defaults to 25 and ranges from 1 to 100.
+- The response is `{data, count, offset, limit, next, previous}`. Count and page share one database snapshot. Links retain filters and sorting; empty and beyond-end pages return `200`.
+- Hidden or nonexistent nested installations return `404`. Regional filters that match nothing visible return an empty page.
+
+For example, after obtaining an analyst token:
+
+```sh
+curl -i 'http://127.0.0.1:3000/readings?from=2026-08-17T18%3A30%3A00Z&to=2026-08-24T18%3A30%3A00Z&sort=-timestamp&offset=0&limit=25' \
+  -H "Authorization: Bearer $ANALYST_TOKEN"
+```
+
+Business GET/HEAD responses carry strong `ETag`, `Cache-Control: private, no-cache` and `Vary: Accept, Authorization`. Repeat the same URL with `If-None-Match` set to its returned tag for bodyless `304`; a stale `If-Match` returns `412`. Authentication and jurisdiction checks always run first. POST returns the canonical reading's ETag and receipt-based Last-Modified too.
+
+Reading, latest and nonempty history responses expose receipt-based `Last-Modified`; overviews include metadata changes as well. Immutable atomic readings support conservative date-only revalidation. Mutable views require ETags for `304`, because date-only comparison can miss same-second changes or delayed commits. Hierarchy directories use ETags without inventing a complete modification date. Count/page consistency holds within a response; offset pages may shift between requests as new or late readings arrive.
+
+See [Stage 6 verification and limits](docs/evidence/STAGE_6.md).
 
 ## Checks
 
@@ -126,7 +151,7 @@ Dockerfile                  nonroot application image for later deployment
 .github/workflows/ci.yml    automated build and database checks
 ```
 
-The coursework API is still in progress; historical queries, conditional HTTP behavior, summaries and deployment remain planned. Database owner credentials are for migrations and seed administration, not the running server. In a built container, migration commands are `node dist/cli/migrate.js` and `node dist/cli/grant-runtime.js`; startup never runs them automatically.
+The coursework API is still in progress; district summaries, agreed mutable-resource CRUD and deployment remain planned. Database owner credentials are for migrations and seed administration, not the running server. In a built container, migration commands are `node dist/cli/migrate.js` and `node dist/cli/grant-runtime.js`; startup never runs them automatically.
 
 See [the database guide](docs/DATABASE.md) for the model, immutability rules, migration behavior and account separation.
 
@@ -139,4 +164,4 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Continue with **Stage 6: historical queries, pagination and conditional HTTP responses** in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.
+Continue with **Stage 8: district generation summaries**, which can proceed while the Stage 7 CRUD interpretation awaits lecturer clarification in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.

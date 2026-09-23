@@ -24,7 +24,7 @@ interface AppDependencies {
 export function createApp({ database, logger, config, isShuttingDown = () => false }: AppDependencies) {
   const app = express();
   app.disable('x-powered-by');
-  // Health must never return a cached 304; business validators arrive in Stage 6.
+  // Health stays uncached; business routes explicitly hash their selected representations.
   app.disable('etag');
   app.use(requestContext(logger));
   app.use(helmet({
