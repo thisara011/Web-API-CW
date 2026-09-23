@@ -1,6 +1,6 @@
 # Proposed API contract
 
-Status: this document retains the original target design; `openapi/openapi.json` is the implemented contract through Stage 6. The following deliberate differences reconcile the running Stage 4 API and the Stage 5 endpoint surface discussed with the student:
+Status: this document retains the original target design; `openapi/openapi.json` is the implemented contract through Stages 1–6 and 8. The following deliberate differences reconcile the running Stage 4 API and the Stage 5 endpoint surface discussed with the student:
 
 - Current base path is `/`, with `/auth/token`, `/substations`, `/installations/{id}/latest-reading`, and canonical `/readings/{readingId}`. The original table below proposes `/solar/v1.0`, `/auth/tokens`, `/grid-substations`, `/last-known-reading`, and nested reading identity. A version-prefix/naming migration requires a separate coordinated change; these alternate URLs are not advertised as implemented.
 - Analysts currently use `geography:read` and `installation:read` together with national/provincial/district attributes; devices use `readings:write` and a bound installation identity. Every protected request rechecks stored activity, credential version and (for analysts) jurisdiction. JWT verification requires expiry and issued-at claims, configured issuer/audience, HS256 and JWT type.
@@ -158,6 +158,12 @@ Conditional requests use HTTP precondition ordering. In particular, matching `If
 Use `Cache-Control: private, no-cache` for authenticated reads and appropriate Vary fields for representation/authentication handling; tokens use `no-store`. Return validators on applicable responses, including `304`. A cache hit never bypasses authentication or scope checks.
 
 ## 6. District summary semantics
+
+Implemented in Stage 8 at the root path `/districts/{districtId}/generation-summary`. OpenAPI defines the complete response. `measuredPowerKw` is the fresh subtotal; `energyTodayKwh` is the baseline-qualified subtotal. Freshness threshold is inclusive at 30 minutes. Empty districts have null totals and false completeness flags. Energy completeness means baseline/counter coverage, not freshness; `staleEnergyInstallations` and observation bounds distinguish those.
+
+All installations in the currently stored district inventory are included, even if device authentication is disabled. Historical replay is not an asset-lifecycle reconstruction or an audit of what data was known at the cutoff; later backfill can alter a replay. `invalidCounterInstallations` excludes imported latest counters below midnight baselines. The API ingestion path already rejects counter decreases, but the summary does not silently report negative generation from inconsistent administrative imports.
+
+ETags use the complete body (including cutoff and coverage) plus the selected URI/jurisdiction. Date validators are omitted because time-dependent freshness and inventory membership are not described by a latest receipt time. The following planned semantics are now implemented:
 
 `GET /districts/{id}/generation-summary?as-of={instant}` returns derived state at a cutoff. With no explicit cutoff, use the start of the current 15-minute slot; return that `asOf` and `Asia/Colombo` so the snapshot's timing is visible and cacheable. Reject future cutoffs. The resource is an aggregate snapshot, not a promise of continuous meter connectivity.
 

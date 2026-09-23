@@ -3,7 +3,7 @@
   "info": {
     "title": "SLSEA Solar Generation API",
     "version": "0.1.0",
-    "description": "SLSEA Solar Generation API, Stages 1\u20136. Public health and OpenAPI; JWT-protected hierarchy, immutable ingestion, scoped history and operational reads. Current paths are relative to the host root. GET/HEAD business representations support authorized ETag revalidation. Deployment and district summaries remain planned."
+    "description": "SLSEA Solar Generation API, Stages 1\u20136 and 8. Public health and OpenAPI; JWT-protected hierarchy, immutable ingestion, scoped history, operational reads and district generation summaries. Current paths are relative to the host root. Business GET/HEAD uses authorized ETag revalidation. Mutable CRUD clarification and deployment remain outstanding."
   },
   "servers": [
     {
@@ -32,6 +32,10 @@
     {
       "name": "Readings",
       "description": "Immutable measurements. Devices append their own readings; analysts read only within their jurisdiction."
+    },
+    {
+      "name": "Summaries",
+      "description": "Jurisdiction-scoped power/energy aggregates with explicit measurement coverage."
     }
   ],
   "paths": {
@@ -2295,6 +2299,151 @@
           }
         }
       }
+    },
+    "/districts/{districtId}/generation-summary": {
+      "get": {
+        "operationId": "getDistrictGenerationSummary",
+        "tags": [
+          "Summaries"
+        ],
+        "summary": "Summarize district power and local-day energy with coverage",
+        "description": "Requires installation:read and an active national analyst or analyst assigned to the containing province/this district. Absent and hidden districts both return 404. One SQL snapshot selects each site\u2019s latest observation at/before cutoff and its exact Asia/Colombo midnight baseline. Future observations are excluded. All current inventory installations (including inactive) contribute to the denominator. Historical replay uses the currently stored dataset, so late backfill can change past summaries. No Last-Modified is emitted: time-dependent freshness and inventory cannot be represented by latest receipt time. ETags include asOf and the complete response; GET/HEAD can return 304 after authorization. Empty districts return 200 with null totals and false completeness. HEAD/OPTIONS supported; writes return 405. This is a measured snapshot, not a continuous live-power guarantee.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "districtId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "as-of",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Optional inclusive cutoff, on/after Unix epoch and never future. Seconds, timezone and at most three fractional digits required. Default: current 15-minute slot start. Unknown or repeated parameters return 400; URL-encode + as %2B."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "description": "Strong comparison; supports quoted tag lists and *. Evaluated before other preconditions. Weak tags never match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "description": "Weak comparison; supports quoted tag lists and *. Matching authorized GET/HEAD returns 304. Takes precedence over If-Modified-Since.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Unmodified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date precondition where a modification timestamp is available. Ignored when If-Match is present. Subsecond comparisons are conservative.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-Modified-Since",
+            "in": "header",
+            "required": false,
+            "description": "HTTP-date; ignored when If-None-Match is present. Date-only 304 is used only for immutable atomic readings; mutable views revalidate by ETag to avoid same-second/late-commit false cache hits.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Scoped measured subtotals and coverage, with explicit observation bounds.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistrictGenerationSummary"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Authorized summary unchanged for its cutoff; no body.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/RepresentationTag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/PrivateRevalidation"
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Includes Accept and Authorization."
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/MethodNotAllowed"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2766,6 +2915,209 @@
             ],
             "description": "Relative previous-page URL; beyond-end pages link to the final valid page."
           }
+        }
+      },
+      "DistrictGenerationSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "district",
+          "asOf",
+          "dayStart",
+          "localDate",
+          "timeZone",
+          "freshnessMinutes",
+          "measuredPowerKw",
+          "energyTodayKwh",
+          "powerCoverageComplete",
+          "energyCoverageComplete",
+          "totalInstallations",
+          "freshInstallations",
+          "staleInstallations",
+          "noReadingInstallations",
+          "energyContributingInstallations",
+          "missingMidnightBaselineInstallations",
+          "invalidCounterInstallations",
+          "staleEnergyInstallations",
+          "powerOldestObservedAt",
+          "powerNewestObservedAt",
+          "energyOldestObservedAt",
+          "energyNewestObservedAt"
+        ],
+        "properties": {
+          "district": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "code",
+              "name",
+              "provinceId"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "code": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "provinceId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Inclusive observation cutoff in UTC. Default is the current 15-minute slot start."
+          },
+          "dayStart": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Asia/Colombo local midnight for the cutoff, serialized in UTC."
+          },
+          "localDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "timeZone": {
+            "type": "string",
+            "const": "Asia/Colombo"
+          },
+          "freshnessMinutes": {
+            "type": "integer",
+            "const": 30
+          },
+          "measuredPowerKw": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Sum of latest powers no more than 30 minutes old at cutoff. Null when none are fresh; zero is a measured value. This is a subtotal if coverage is incomplete."
+          },
+          "energyTodayKwh": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "Sum of per-site latest-counter minus exact midnight-counter, including stale but otherwise usable observations. Null when no site qualifies; not a sum of cumulative counters."
+          },
+          "powerCoverageComplete": {
+            "type": "boolean",
+            "description": "True only for a nonempty district where every installation has a fresh observation."
+          },
+          "energyCoverageComplete": {
+            "type": "boolean",
+            "description": "True only for a nonempty district where every installation has an exact midnight baseline and a nondecreasing latest counter. Does not imply freshness; see staleEnergyInstallations and time bounds."
+          },
+          "totalInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "All installations in the current district inventory, including inactive installations; not a reconstructed historical inventory."
+          },
+          "freshInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Latest observation is at or before cutoff and at most 30 minutes old (inclusive)."
+          },
+          "staleInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Latest observation exists at cutoff but is more than 30 minutes old."
+          },
+          "noReadingInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "No observation at or before cutoff (future rows do not count)."
+          },
+          "energyContributingInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Sites with an exact midnight baseline and a nondecreasing latest counter."
+          },
+          "missingMidnightBaselineInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Sites lacking an observation exactly at local midnight, including sites without any observations."
+          },
+          "invalidCounterInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Sites with a latest counter below their midnight baseline; excluded from the energy sum."
+          },
+          "staleEnergyInstallations": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Energy contributors whose latest observation is stale."
+          },
+          "powerOldestObservedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Bounds of contributing latest observations for this subtotal, or null when none qualify."
+          },
+          "powerNewestObservedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Bounds of contributing latest observations for this subtotal, or null when none qualify."
+          },
+          "energyOldestObservedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Bounds of contributing latest observations for this subtotal, or null when none qualify."
+          },
+          "energyNewestObservedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Bounds of contributing latest observations for this subtotal, or null when none qualify."
+          }
+        },
+        "example": {
+          "district": {
+            "id": "22222222-2222-4222-8222-222222222222",
+            "code": "COL",
+            "name": "Colombo",
+            "provinceId": "11111111-1111-4111-8111-111111111111"
+          },
+          "asOf": "2026-08-01T06:30:00.000Z",
+          "dayStart": "2026-07-31T18:30:00.000Z",
+          "localDate": "2026-08-01",
+          "timeZone": "Asia/Colombo",
+          "freshnessMinutes": 30,
+          "measuredPowerKw": 5,
+          "energyTodayKwh": 7.5,
+          "powerCoverageComplete": true,
+          "energyCoverageComplete": true,
+          "totalInstallations": 2,
+          "freshInstallations": 2,
+          "staleInstallations": 0,
+          "noReadingInstallations": 0,
+          "energyContributingInstallations": 2,
+          "missingMidnightBaselineInstallations": 0,
+          "invalidCounterInstallations": 0,
+          "staleEnergyInstallations": 0,
+          "powerOldestObservedAt": "2026-08-01T06:30:00.000Z",
+          "powerNewestObservedAt": "2026-08-01T06:30:00.000Z",
+          "energyOldestObservedAt": "2026-08-01T06:30:00.000Z",
+          "energyNewestObservedAt": "2026-08-01T06:30:00.000Z"
         }
       }
     },

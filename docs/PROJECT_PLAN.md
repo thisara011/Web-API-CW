@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026; updated: 23 September 2026. Status: Stages 1–6 implemented and locally verified. District summaries, mutable-resource clarification and deployment remain planned. See the README and stage evidence for setup and results.
+Prepared: 21 September 2026; updated: 23 September 2026. Status: Stages 1–6 and 8 implemented and locally verified. Stage 7 mutable-resource clarification, deployment and submission work remain open. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -170,6 +170,8 @@ Stage 4 implementation note: `/auth/token` verifies scrypt credential hashes and
 Stage 5 implementation note: device-owned POST, atomic reading GET, latest-reading and overview are implemented. Counter validation checks immediate event-time neighbours inside a per-installation advisory-lock transaction; runtime privileges stay SELECT/INSERT only. Input validation rejects extra precision, spoofed ownership, invalid/future timestamps and pre-commission observations. JWT use rechecks active identity and credential version; analyst jurisdiction must still match stored scope. See [Stage 5 evidence](evidence/STAGE_5.md). Existing root-based URI names are retained and the design differences recorded in API_DESIGN.md; conditional validators remain Stage 6.
 
 Stage 6 implementation note: installation/regional histories intersect validated region/time filters with analyst scope before count and paging. Count/page/parent checks use a REPEATABLE READ snapshot; offset links preserve filters and stable timestamp/UUID order. Shared conditional handling provides strong ETags, weak/strong comparison semantics, authorized bodyless 304, 412 and conservative date handling. Migration 003 tracks hierarchy changes used in overview modification dates. See [Stage 6 evidence](evidence/STAGE_6.md). Root hierarchy directories/pagination beyond the existing hierarchy surface remain a contract-audit item; this stage implements the planned historical collections. Stage 8 can proceed independently while Stage 7's D1 clarification remains open.
+
+Stage 8 implementation note: `/districts/{districtId}/generation-summary` now provides scoped measured power, local-day counter deltas and explicit coverage. A single SQL snapshot selects latest observations at/before the cutoff and exact Asia/Colombo midnight baselines. Freshness is inclusive at 30 minutes; no usable observations yield null, not fabricated zero. Cutoff defaults to the current 15-minute slot, with historical replay supported. Current inventory includes inactive installations; historical asset membership is not reconstructed. ETags include cutoff and representation; no receipt-only Last-Modified is claimed. See [Stage 8 evidence](evidence/STAGE_8.md). Stage 7 is still open; completion here does not resolve the CRUD contradiction.
 
 ## 7. Verification and evidence strategy
 

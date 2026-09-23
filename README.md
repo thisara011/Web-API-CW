@@ -2,7 +2,7 @@
 
 NB6007CEM Web API Development coursework: a REST API for installation-bound solar reading ingestion and jurisdiction-scoped operational and historical reads.
 
-**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Stage 6 adds scoped history, pagination and conditional GET/HEAD. District summaries and deployment remain planned.
+**Status:** API foundation, database model, deterministic seed, JWT authentication and secured hierarchy reads are implemented with TypeScript, Express 5 and PostgreSQL. Stage 5 adds immutable reading ingestion and atomic/latest/overview reads. Stage 6 adds scoped history, pagination and conditional GET/HEAD. Stage 8 adds district generation summaries. Deployment and the Stage 7 CRUD clarification remain outstanding.
 
 ## Run locally
 
@@ -95,6 +95,26 @@ Reading, latest and nonempty history responses expose receipt-based `Last-Modifi
 
 See [Stage 6 verification and limits](docs/evidence/STAGE_6.md).
 
+## District summaries (Stage 8)
+
+`GET /districts/{districtId}/generation-summary` is available to analysts within their jurisdiction. `as-of` is an optional inclusive ISO timestamp; it defaults to the current 15-minute slot start. Future cutoffs are rejected. The response reports `asOf`, local `dayStart`, `localDate` and `timeZone: Asia/Colombo`.
+
+- `measuredPowerKw` sums each site's latest observation at/before cutoff only when no more than 30 minutes old. No fresh measurements means `null`; observed night-time zero remains `0`.
+- `energyTodayKwh` sums each site's latest counter minus its exact local-midnight counter. Missing baselines and inconsistent counters are excluded; no usable contributors means `null`.
+- Installation counts, completeness flags, stale-energy counts and oldest/newest contributing observation times show how much data supports the subtotal. Energy coverage can be complete while observations are stale; check the separate freshness fields.
+- The denominator includes all installations in the current district inventory, including inactive devices. Historical replay uses current stored metadata and observations, so late backfill can change earlier summaries.
+
+For example, counters moving from 100 to 104.5 and 250 to 253 yield **7.5 kWh**. If their fresh powers are 2 and 3, the summary reports **5 kW**. It does not sum cumulative counters or assume missing devices generated zero.
+
+To replay the static seed, use a district ID from the hierarchy and a cutoff inside the seeded week, for example:
+
+```sh
+curl -i "http://127.0.0.1:3000/districts/$DISTRICT_ID/generation-summary?as-of=2026-08-24T06%3A30%3A00Z" \
+  -H "Authorization: Bearer $ANALYST_TOKEN"
+```
+
+The default present-time summary will correctly mark old seed observations stale. Summary ETags support authorized GET/HEAD revalidation and change when the cutoff or representation changes; no Last-Modified is invented for this time-dependent aggregate. See [Stage 8 evidence](docs/evidence/STAGE_8.md). Stage 8 requires no new database migration beyond the existing Stage 6 migration 003.
+
 ## Checks
 
 ```sh
@@ -151,7 +171,7 @@ Dockerfile                  nonroot application image for later deployment
 .github/workflows/ci.yml    automated build and database checks
 ```
 
-The coursework API is still in progress; district summaries, agreed mutable-resource CRUD and deployment remain planned. Database owner credentials are for migrations and seed administration, not the running server. In a built container, migration commands are `node dist/cli/migrate.js` and `node dist/cli/grant-runtime.js`; startup never runs them automatically.
+The coursework API is still in progress; agreed mutable-resource CRUD, deployment and final submission checks remain planned. Database owner credentials are for migrations and seed administration, not the running server. In a built container, migration commands are `node dist/cli/migrate.js` and `node dist/cli/grant-runtime.js`; startup never runs them automatically.
 
 See [the database guide](docs/DATABASE.md) for the model, immutability rules, migration behavior and account separation.
 
@@ -164,4 +184,4 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Continue with **Stage 8: district generation summaries**, which can proceed while the Stage 7 CRUD interpretation awaits lecturer clarification in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.
+Continue with **deployment preparation and the remaining contract audit**; actual hosting needs a provider/account decision, and Stage 7 CRUD still awaits lecturer clarification in the project plan. Build one stage at a time, verify its acceptance criteria, explain it, and record a meaningful commit. The coursework's conflict between append-only readings and full CRUD is tracked explicitly before any mutable management API is added.

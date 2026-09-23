@@ -102,6 +102,17 @@ This is a working disclosure record, not a substitute for the report appendix or
 - Student checkpoint: explain why an unauthorized matching ETag cannot produce 304; compare weak If-None-Match with strong If-Match; trace a half-open time filter and scoped count; demonstrate why a late off-page reading changes the page count/tag.
 - Limits: offset pagination is not a cross-request snapshot, and a fixed event-time window still permits backfill. Directory Last-Modified dates are omitted where a complete membership clock is absent. District summaries, deployment, production hardening and the unresolved CRUD interpretation remain pending.
 
+## Entry 008 — district generation summary
+
+- Date: 23 September 2026; tool: Codex (GPT-6).
+- User prompt: “lets go with next step”, following the Stage 6 completion and proposed district summary work. Followed the plan's independent Stage 8 path while Stage 7 CRUD remains unresolved.
+- Artifacts: summary cutoff validation, district aggregate service, HTTP route with existing bearer/conditional handling, Swagger schemas, arithmetic/coverage/authorization tests and evidence notes.
+- Decisions: use one scoped SQL statement for consistent district visibility, current inventory, latest-at-cutoff observations, exact local-midnight baselines and aggregate counts. Sum per-site counter differences, not cumulative values; SQL NUMERIC aggregation occurs before JSON-number conversion. Include inactive installations in the denominator and describe historical replay's current-inventory limit explicitly.
+- Review: checked that an exact 30-minute age remains fresh, rows after cutoff are excluded, midnight is computed using Asia/Colombo, null totals differ from measured zero, and stale energy contributors remain visible. No failing application test was observed on the initial full run; this entry does not invent a defect. Strengthened the new HEAD test to assert status and matching ETag as well as the absent body.
+- Verification: final check passed strict TypeScript/build, 167 unit/HTTP tests including updated Swagger, and 101 PostgreSQL tests including the full-seed summary. `git diff --check` passed. Results are recorded in Stage 8 evidence. The small fixtures use an unprivileged runtime SQL role and hand-calculated expectations.
+- Student checkpoint: derive 7.5 kWh from (104.5−100)+(253−250), distinguish it from a cumulative sum, explain 5 kW measured power, and show how missing/stale installations affect counts rather than silently contributing zero.
+- Limits: current asset inventory is not historical lifecycle state; replay can change after backfill. ETags revalidate the cutoff/representation, while date validators are omitted for this time-dependent aggregate. Deployment, production hardening, CRUD clarification and final report/viva work remain outstanding.
+
 ## Subsequent entry template
 
 - Date / tool and model identifier if known:

@@ -42,17 +42,17 @@ Status key: **Planned** means not implemented or verified. **Open** means a deci
 | Q02 | Filtering by province, district, substation and time | B p5; R p3 | Multi-installation analytical queries with authorized regional filters | Implemented/tested: intersected region/installation filters and half-open time bounds |
 | Q03 | Timestamp sorting ascending and descending | B p5; R p3 | Stable ordering and tie-breaking tests | Implemented/tested: timestamp and UUID tie-breaker in both directions |
 | Q04 | Conditional GET; 304 has empty body | B p6; R p3 | ETag/date tests on atomic, collection, composite and derived responses | Implemented/tested: authorized bodyless 304 across resource types; conservative date policy documented |
-| Q05 | District generation summary | B p6; R p3 | Verified power and daily-energy arithmetic, coverage and jurisdiction tests | Planned for First band |
+| Q05 | District generation summary | B p6; R p3 | Verified power and daily-energy arithmetic, coverage and jurisdiction tests | Implemented/tested: scoped power/energy subtotals, local midnight, freshness, historical replay and coverage |
 | E01 | One client-error body contract with code, message and detail | B p6; R p3 | Validation, parser, auth, not-found and method errors use same schema | Implemented across current parser, auth, reading validation/conflict and method errors |
 | S01 | Device authenticates as one installation; can only append its readings | B pp3–4,6; R p5 | Wrong installation and analyst-write attempts denied | Implemented/tested: owning-device append, analyst writes and wrong-device writes denied |
-| S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for hierarchy/readings, history count/link boundaries and conditional requests; summary authorization pending |
+| S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for hierarchy/readings, history count/link boundaries, summaries and conditional authorization |
 | S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Implemented/tested for signed JWTs and scope gates |
 | S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Implemented: scope gate plus jurisdiction SQL predicate |
 | O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Planned |
-| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local OpenAPI documents history and conditional behavior; public deployment pending |
+| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local OpenAPI documents summaries, history and conditional behavior; public deployment pending |
 | O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Planned |
-| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–6 log maintained |
-| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–6 decisions/findings recorded; student explanation pending |
+| I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning and Stages 1–6/8 log maintained |
+| I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stages 1–6/8 decisions/findings recorded; student explanation pending |
 | P01 | Report has six required sections and 2250–2750 words | B p7; R p5 | Student-authored final document and word count | Planned |
 | P02 | Signed declaration plus AI appendix | B pp6–8; R pp5–6 | Actual signed declaration and complete appendix | Planned |
 | P03 | Accurate Level 2 evaluation and Level 3 gap | B pp3,7; R p5 | Concrete deployed resource/method/status examples; honest limitation | Planned |

@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app.js';
 import { parseEnv } from '../../src/config/env.js';
 import { runMigrations } from '../../src/db/migrations.js';
-import { createSeedDataset } from '../../src/seed/dataset.js';
+import { createSeedDataset, SEED_REFERENCE } from '../../src/seed/dataset.js';
 import { seedDatabase } from '../../src/seed/seed.js';
 
 const url = process.env.TEST_DATABASE_URL;
@@ -27,6 +27,14 @@ beforeAll(async () => {
 afterAll(async () => { await applicationPool.end(); await migrationPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); await migrationPool.end(); });
 
 describe('JWT authentication and jurisdiction-scoped reads', () => {
+  it('summarizes the full seed at its final local-midnight cutoff across eight seeded installations', async () => {
+    const login = await request(app).post('/auth/token').send({ principalType: 'analyst', identifier: 'analyst-col@slsea.example', password: 'Coursework-Demo-Password-2026!' });
+    const district = dataset.districts.find((item) => item.code === 'COL')!;
+    const response = await request(app).get(`/districts/${district.id}/generation-summary?as-of=${encodeURIComponent(SEED_REFERENCE)}`).auth(login.body.accessToken, { type: 'bearer' });
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ totalInstallations: 8, freshInstallations: 8, measuredPowerKw: 0, energyTodayKwh: 0, energyContributingInstallations: 8, powerCoverageComplete: true, energyCoverageComplete: true, localDate: '2026-08-25' });
+  });
+
   it('issues a national analyst token and permits its geography collection', async () => {
     const login = await request(app).post('/auth/token').send({ principalType: 'analyst', identifier: 'analyst-national@slsea.example', password: 'Coursework-Demo-Password-2026!' });
     expect(login.status).toBe(200); expect(login.body).toMatchObject({ tokenType: 'Bearer', expiresIn: 900, accessToken: expect.any(String) });

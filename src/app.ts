@@ -13,15 +13,17 @@ import { createAuthRouter } from './routes/auth.js';
 import { createHierarchyRouter } from './routes/hierarchy.js';
 import { requireBearer } from './middleware/auth.js';
 import { createReadingRouter } from './routes/readings.js';
+import { createSummaryRouter } from './routes/summaries.js';
 
 interface AppDependencies {
   database: DatabaseHealth;
   logger: Logger;
   config?: Environment;
   isShuttingDown?: () => boolean;
+  now?: () => number;
 }
 
-export function createApp({ database, logger, config, isShuttingDown = () => false }: AppDependencies) {
+export function createApp({ database, logger, config, isShuttingDown = () => false, now = Date.now }: AppDependencies) {
   const app = express();
   app.disable('x-powered-by');
   // Health stays uncached; business routes explicitly hash their selected representations.
@@ -89,6 +91,7 @@ export function createApp({ database, logger, config, isShuttingDown = () => fal
   if (config && database.pool) {
     app.use('/auth', createAuthRouter(new AuthenticationService(database.pool, config)));
     app.use(createReadingRouter(database.pool, config));
+    app.use(createSummaryRouter(database.pool, config, now));
     app.use(requireBearer(config, 'geography:read', database.pool), createHierarchyRouter(database.pool));
   }
 
