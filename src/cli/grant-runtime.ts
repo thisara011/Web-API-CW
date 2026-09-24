@@ -6,15 +6,24 @@ import { migrationDatabase, reportDatabaseFailure } from './database.js';
 
 async function grant(): Promise<void> {
   const runtimeConfig = parseEnv(process.env);
-  const runtime = createDatabase(runtimeConfig, createLogger(runtimeConfig.LOG_LEVEL));
   const migration = migrationDatabase();
+  let runtime: ReturnType<typeof createDatabase> | undefined;
   try {
-    const actual = await runtime.pool.query<{ role: string; database: string }>('SELECT current_user AS role, current_database() AS database');
     const owner = await migration.pool.query<{ role: string; database: string }>('SELECT current_user AS role, current_database() AS database');
-    const runtimeIdentity = actual.rows[0];
     const migrationIdentity = owner.rows[0];
     const runtimeUrl = new URL(runtimeConfig.DATABASE_URL);
     const migrationUrl = new URL(process.env.MIGRATION_DATABASE_URL!);
+    let runtimeIdentity: { role: string; database: string } | undefined;
+    if (process.env.RUNTIME_DATABASE_ROLE) {
+      // Owner grants to an already-created managed-identity role. A developer's
+      // laptop cannot impersonate the App Service identity to connect as it.
+      if (process.env.RUNTIME_DATABASE_ROLE !== decodeURIComponent(runtimeUrl.username)) throw new Error('RUNTIME_DATABASE_ROLE must match the role in DATABASE_URL');
+      runtimeIdentity = { role: process.env.RUNTIME_DATABASE_ROLE, database: decodeURIComponent(runtimeUrl.pathname.slice(1)) };
+    } else {
+      runtime = createDatabase(runtimeConfig, createLogger(runtimeConfig.LOG_LEVEL));
+      const actual = await runtime.pool.query<{ role: string; database: string }>('SELECT current_user AS role, current_database() AS database');
+      runtimeIdentity = actual.rows[0];
+    }
     if (!runtimeIdentity || !migrationIdentity
       || runtimeUrl.hostname !== migrationUrl.hostname
       || (runtimeUrl.port || '5432') !== (migrationUrl.port || '5432')
@@ -25,7 +34,7 @@ async function grant(): Promise<void> {
     await grantRuntimeAccess(migration.pool, { role: runtimeIdentity.role });
     console.log('Runtime database permissions configured: domain reads and append-only reading inserts');
   } finally {
-    await Promise.all([runtime.close(), migration.close()]);
+    await Promise.all([runtime?.close(), migration.close()]);
   }
 }
 

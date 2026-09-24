@@ -47,6 +47,23 @@ jobs:
         run: npm run check
       - name: Test with PostgreSQL
         run: npm run test:integration
+      - name: Stage App Service runtime files
+        id: release
+        run: node dist/cli/stage-release.js >> "$GITHUB_OUTPUT"
+      - name: Install locked production dependencies in the Linux release
+        run: npm ci --omit=dev --prefix "${{ steps.release.outputs.directory }}"
+      - name: Verify and archive the App Service package
+        working-directory: ${{ steps.release.outputs.directory }}
+        run: |
+          node --input-type=module -e "await import('./dist/app.js'); await import('@azure/identity'); console.log('App Service runtime imports verified')"
+          zip -rq "$GITHUB_WORKSPACE/artifacts/slsea-appservice.zip" .
+      - name: Retain the deployment package for review
+        uses: actions/upload-artifact@v7
+        with:
+          name: slsea-appservice-${{ github.sha }}
+          path: artifacts/slsea-appservice.zip
+          if-no-files-found: error
+          retention-days: 7
       - name: Build production image and verify packaged imports
         run: |
           docker build -t slsea-solar-api:ci .

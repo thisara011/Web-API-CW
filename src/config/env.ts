@@ -16,6 +16,8 @@ const environmentSchema = z.object({
   HOST: z.string().trim().min(1).default('127.0.0.1'),
   PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
   DATABASE_URL: databaseUrl,
+  DATABASE_AUTH_MODE: z.enum(['password', 'azure-cli', 'managed-identity']).default('password'),
+  AZURE_CLIENT_ID: z.uuid().optional(),
   // Do not use Boolean("false"), which evaluates to true.
   DATABASE_SSL: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
@@ -39,6 +41,15 @@ export function parseEnv(input: NodeJS.ProcessEnv): Environment {
   }
   if (result.data.NODE_ENV === 'production' && (!input.JWT_SECRET || result.data.JWT_SECRET === 'local-development-secret-change-before-production')) {
     throw new Error('Production requires a private JWT_SECRET; the development signing key is forbidden.');
+  }
+  if (result.data.DATABASE_AUTH_MODE !== 'password') {
+    const url = new URL(result.data.DATABASE_URL);
+    if (!result.data.DATABASE_SSL) throw new Error('Azure database authentication requires DATABASE_SSL=true');
+    if (!url.username || url.password || url.hash || !url.hostname.endsWith('.postgres.database.azure.com')) {
+      throw new Error('Azure DATABASE_URL must use a PostgreSQL Flexible Server hostname and an explicit role, without a password or fragment');
+    }
+    try { decodeURIComponent(url.username); decodeURIComponent(url.pathname.slice(1)); }
+    catch { throw new Error('Invalid percent encoding in DATABASE_URL'); }
   }
   return result.data;
 }

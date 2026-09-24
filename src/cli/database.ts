@@ -2,16 +2,22 @@ import { parseEnv } from '../config/env.js';
 import { createLogger } from '../config/logger.js';
 import { createDatabase } from '../db/pool.js';
 
-export function migrationDatabase() {
-  if (!process.env.MIGRATION_DATABASE_URL) {
+export function migrationConfiguration(input: NodeJS.ProcessEnv) {
+  if (!input.MIGRATION_DATABASE_URL) {
     throw new Error('MIGRATION_DATABASE_URL is required; use the schema owner, not the application login');
   }
-  const config = parseEnv({
-    ...process.env,
-    DATABASE_URL: process.env.MIGRATION_DATABASE_URL,
-    DATABASE_SSL: process.env.MIGRATION_DATABASE_SSL ?? process.env.DATABASE_SSL ?? 'false',
+  return parseEnv({
+    ...input,
+    DATABASE_URL: input.MIGRATION_DATABASE_URL,
+    DATABASE_SSL: input.MIGRATION_DATABASE_SSL ?? input.DATABASE_SSL ?? 'false',
+    DATABASE_AUTH_MODE: input.MIGRATION_DATABASE_AUTH_MODE ?? 'password',
+    AZURE_CLIENT_ID: input.MIGRATION_AZURE_CLIENT_ID,
     DB_CONNECTION_TIMEOUT_MS: '30000',
   });
+}
+
+export function migrationDatabase() {
+  const config = migrationConfiguration(process.env);
   return createDatabase(config, createLogger(config.LOG_LEVEL));
 }
 

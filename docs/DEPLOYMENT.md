@@ -1,6 +1,6 @@
 # Deployment and operations runbook
 
-Status: deployment preparation; no public host or URL has been supplied. Local tests do not establish public deployment, container execution or repository sharing. Choose a provider that supports Node 24 or the supplied image, persistent PostgreSQL, verified database TLS, an HTTPS ingress and a separate restricted database login. Confirm its actual price, region and account limits before provisioning.
+Status: Azure App Service and PostgreSQL Flexible Server are selected; no public URL is deployed. Follow the [Azure delivery plan](AZURE_PLAN.md) for the native Node 24 package and identity configuration. The Docker instructions below remain an alternative release path. Local tests do not establish public deployment, container execution or repository sharing. Confirm actual price, region and account limits before provisioning.
 
 ## 1. Prepare the release
 
@@ -15,14 +15,16 @@ Required runtime settings:
 | `NODE_ENV` | `production` |
 | `HOST` / `PORT` | `0.0.0.0` / provider's application port |
 | `DATABASE_URL` | Restricted runtime login, PostgreSQL URL without query parameters |
+| `DATABASE_AUTH_MODE` | `managed-identity` on Azure; `password` remains the local default |
 | `DATABASE_SSL` | `true` for a remote TLS database; certificates must validate |
+| `AZURE_CLIENT_ID` | Only for a selected user-assigned managed identity; omit for system-assigned identity |
 | `JWT_SECRET` | A private cryptographically random key; generate at least 32 random bytes, encode as hex/base64 |
 | `JWT_ISSUER` / `JWT_AUDIENCE` | Stable identifiers matching the clients; defaults are documented in `.env.example` |
 | `LOG_LEVEL` | `info` (logs omit passwords, tokens and connection strings) |
 
 A missing/default production signing key stops startup. Production startup and readiness also check required schema access and reject active published seed credentials. Token exchange independently refuses hashes using the known fixture salt prefixes in production. These checks supplement correct credential provisioning; they are not a general password-strength audit.
 
-`MIGRATION_DATABASE_URL` and optional `MIGRATION_DATABASE_SSL` belong only to administrative release jobs, never the running API. The CLI shares environment validation; supply the private signing-key setting when running it with `NODE_ENV=production`.
+`MIGRATION_DATABASE_URL`, `MIGRATION_DATABASE_AUTH_MODE`, optional `MIGRATION_DATABASE_SSL` and `MIGRATION_AZURE_CLIENT_ID` belong only to administrative release jobs, never the running API. Owner authentication defaults independently to `password`; use `azure-cli` for an authorized developer's Entra login. The CLI shares environment validation; supply the private signing-key setting when running it with `NODE_ENV=production`. For a pre-created managed-identity role, `RUNTIME_DATABASE_ROLE` lets the grant command operate through the owner connection; it must match the username in the runtime URL. See the Azure plan for the role-mapping prerequisite.
 
 ## 2. Initialize and secure the data
 

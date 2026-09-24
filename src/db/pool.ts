@@ -1,16 +1,27 @@
-import { Pool } from 'pg';
+import { Pool, type PoolConfig } from 'pg';
+import type { TokenCredential } from '@azure/identity';
 import type { Logger } from 'pino';
 import type { Environment } from '../config/env.js';
 import { checkProductionReadiness } from './readiness.js';
+import { azureDatabaseCredential, azureDatabasePassword } from './azure-auth.js';
 
 export interface DatabaseHealth {
   checkConnection(): Promise<void>;
   pool?: Pool;
 }
 
-export function createDatabase(config: Environment, logger: Logger) {
-  const pool = new Pool({
-    connectionString: config.DATABASE_URL,
+export function databasePoolOptions(config: Environment, credential?: TokenCredential): PoolConfig {
+  const url = new URL(config.DATABASE_URL);
+  const connection: PoolConfig = config.DATABASE_AUTH_MODE === 'password'
+    ? { connectionString: config.DATABASE_URL }
+    : {
+      host: url.hostname, port: Number(url.port || 5432),
+      user: decodeURIComponent(url.username), database: decodeURIComponent(url.pathname.slice(1)),
+      // Do not pass connectionString here: pg URL parsing can replace this callback.
+      password: azureDatabasePassword(credential ?? azureDatabaseCredential(config), config.DB_CONNECTION_TIMEOUT_MS),
+    };
+  return {
+    ...connection,
     ssl: config.DATABASE_SSL ? { rejectUnauthorized: true } : false,
     max: config.DB_POOL_MAX,
     connectionTimeoutMillis: config.DB_CONNECTION_TIMEOUT_MS,
@@ -19,7 +30,11 @@ export function createDatabase(config: Environment, logger: Logger) {
     query_timeout: config.DB_CONNECTION_TIMEOUT_MS,
     application_name: 'slsea-solar-api',
     options: '-c search_path=solar,pg_catalog -c timezone=UTC',
-  });
+  };
+}
+
+export function createDatabase(config: Environment, logger: Logger) {
+  const pool = new Pool(databasePoolOptions(config));
 
   // An idle-client error must not become an unhandled process event.
   pool.on('error', () => logger.error('Database connection failed'));

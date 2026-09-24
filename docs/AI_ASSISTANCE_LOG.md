@@ -138,3 +138,28 @@ Retain later student prompts and material generation/revision instructions. Expo
 - Verification: initial database tests failed because the temporary PostgreSQL server was stopped (ECONNREFUSED), not because the tests passed or were skipped successfully. Restarted it and reran the full suite. The compiled release rehearsal created and removed its own isolated database/role, migrated, seeded twice, disabled fixtures, provisioned private credentials, caught up all 200 sites, verified all 25 districts, exercised device and analyst boundaries and checked restart persistence. Production dependency audit reported zero vulnerabilities. Final counts and limitations are in evidence/COMPLETION_AUDIT.md.
 - Student checkpoint: explain why a timing dummy must never become a valid credential, why empty authorized collections differ from hidden parents, why credential rotation invalidates existing JWTs, and why a synthetic-data job must be explicit and labeled.
 - Limits: single-process/IP login limits need a configured edge policy behind a proxy; Docker/remote CI/public HTTPS are not claimed as run locally. Full CRUD remains unresolved, and the student must author the report, review/sign the declaration and prepare the viva.
+
+## Entry 010 — Azure target selected
+
+- User selected Azure Web App and a real PostgreSQL database, with development step by step.
+- Used Azure readiness and PostgreSQL skill references and checked Microsoft documentation. Recorded App Service plus PostgreSQL Flexible Server as the target in AZURE_PLAN.md and PROJECT_PLAN.md.
+- Static inspection found the existing Node 24/Express/pg stack and release prerequisites. Azure CLI is absent, so subscription/resource access was not verified. Azure managed-identity connection support is planned and explicitly not claimed as implemented.
+- Prepared a phased account/configuration/database/deployment/verification plan. Local fixture passwords must stay outside the hosted release; owner operations remain separate from startup. Local Azure session metadata is excluded from Git and Docker build context.
+- No new tests/builds, Azure installation, resource creation or deployment ran in this planning step. Existing local verification remains historical evidence; account type, existing resources and budget are pending user input.
+- Follow-up: user confirmed a Microsoft Student Ambassador subscription and selected “Nothing created yet.” Updated the Azure plan for new resources and supplied the first resource-group setup step. Credit allowance, expiry and Azure resource availability remain unverified; no resource creation was performed by the agent.
+
+## Entry 011 — Azure login and resource group
+
+- User installed Azure CLI, signed in and replied “logged in.” Verified the selected account and listed available subscriptions: one enabled Visual Studio Enterprise Subscription. No passwords or access tokens were printed or committed.
+- Checked `rg-slsea-coursework`: absent. Created the empty resource group in Central India using the explicit subscription, with project/environment tags; Azure returned Succeeded. No Web App, App Service plan or database was created.
+- Updated the Azure plan with verified state. Available credits, billing limits and service-specific regional capacity remain unverified. The next application preparation step is managed-identity PostgreSQL authentication and App Service packaging.
+
+## Entry 012 — Azure authentication and release preparation
+
+- Date: 24 September 2026; tool: Codex. User direction: “lets start where we stop”; later reported “i have monthly 150 USD”. Continued application preparation and recorded the allowance without treating it as a verified available balance.
+- Added Azure Identity credentials and per-connection PostgreSQL token callbacks with verified TLS; kept local password access and administrative authentication independent. Added an owner-only grant mode for a pre-created runtime identity role.
+- Review finding: pg connection-string parsing can replace a supplied password callback. Azure mode therefore passes explicit host/port/user/database fields; tests instantiate the real pg client to verify callback preservation. No deployed authentication incident was observed. Release staging rejects symlinked selected inputs and includes only runtime assets; the production signing-key template is deliberately blank.
+- Prepared Linux CI packaging, App Service settings and deployment documentation. No Web App or PostgreSQL server was created or published.
+- Verification: TypeScript/build passed; 182 unit/HTTP and 106 real PostgreSQL integration tests passed on complete reruns. Initial timeout/socket failures and verification limits are recorded in [Azure preparation evidence](evidence/AZURE_PREPARATION.md). Local staging succeeded, and the compiled Azure CLI credential path obtained a PostgreSQL token without exposing it. Remote CI and Azure SQL connectivity are not claimed as tested.
+- Student checkpoint: explain why a database access token differs from the API's JWT, why managed identity needs a mapped PostgreSQL role and grants, why migrations use a separate identity, and why a Linux deployment package excludes local fixture/environment files.
+- Next: price and validate a small Azure configuration within the reported credit, provision identities/database, then deploy and collect live evidence. Coursework CRUD clarification, report authorship and viva preparation remain open.

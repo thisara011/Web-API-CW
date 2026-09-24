@@ -12,3 +12,5 @@ docs
 .DS_Store
 .idea
 .vscode
+.copilot-azure
+artifacts

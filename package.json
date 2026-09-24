@@ -24,9 +24,11 @@
     "db:credentials": "tsx --env-file-if-exists=.env src/cli/credentials.ts",
     "smoke": "tsx --env-file-if-exists=.env src/cli/smoke.ts",
     "demo:reading": "tsx --env-file-if-exists=.env src/cli/demo-reading.ts",
-    "demo:catch-up": "tsx --env-file-if-exists=.env src/cli/catch-up.ts"
+    "demo:catch-up": "tsx --env-file-if-exists=.env src/cli/catch-up.ts",
+    "release:stage": "npm run build && node dist/cli/stage-release.js"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.3",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
     "jose": "^6.2.12",

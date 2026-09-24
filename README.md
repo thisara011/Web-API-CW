@@ -184,7 +184,7 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Next: **resolve the mutable-resource decision and select the public host**. Deployment preparation and the local completion audit are recorded below. The coursework conflict between append-only readings, read-only analysts and full CRUD still needs clarification; offline credential administration is not HTTP CRUD.
+Next: **size and provision Azure App Service and PostgreSQL** using the [Azure delivery plan](docs/AZURE_PLAN.md). Azure login, the resource group, database authentication support and local release staging are ready. The coursework conflict between append-only readings, read-only analysts and full CRUD still needs clarification; offline credential administration is not HTTP CRUD.
 
 ## Completion audit and deployment preparation
 
@@ -193,6 +193,7 @@ Analysts can browse `/provinces`, `/districts`, `/substations` and `/installatio
 Login verification uses asynchronous scrypt, bounded concurrency and a per-process IP throttle. Production rejects the development signing key and known fixture credentials. Owner-only credential rotation revokes old tokens and never edits readings.
 
 - [Deployment runbook](docs/DEPLOYMENT.md): credentials, Compose/HTTPS setup, synthetic catch-up, device POST and smoke commands.
+- [Azure delivery plan](docs/AZURE_PLAN.md): selected App Service/PostgreSQL target and step-by-step acceptance gates.
 - [Completion verification](docs/evidence/COMPLETION_AUDIT.md): actual test and local release results.
 - [Submission and viva checklist](docs/SUBMISSION_CHECKLIST.md): remaining external and student-authored work.
 
