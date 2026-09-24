@@ -1,9 +1,9 @@
-import { copyFile, mkdir, mkdtemp, readdir, rm, lstat, access, writeFile, realpath } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, rm, lstat, access, writeFile, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 // A whitelist prevents .env, Azure sessions, local DB bootstrap and Git data
 // from entering an App Service deployment artifact.
-export async function stageAzureRelease(sourceRoot: string, outputParent: string): Promise<string> {
+export async function stageAzureRelease(sourceRoot: string, outputParent: string, azureInstall = false): Promise<string> {
   sourceRoot = await realpath(sourceRoot);
   await access(path.join(sourceRoot, 'dist/server.js'));
   await access(path.join(sourceRoot, 'dist/cli/migrate.js'));
@@ -30,7 +30,22 @@ export async function stageAzureRelease(sourceRoot: string, outputParent: string
     for (const entry of await readdir(path.join(sourceRoot, 'db/migrations'), { withFileTypes: true })) {
       if (/^\d{3}_[a-z0-9_]+\.sql$/.test(entry.name)) await copy(path.join('db/migrations', entry.name));
     }
-    await writeFile(path.join(target, 'RELEASE.txt'), 'App Service staging directory. Install locked production dependencies on Linux with Node 24, then ZIP the contents. Use node dist/server.js and disable remote build for this precompiled package. No cloud deployment has been performed by staging.\n');
+    if (azureInstall) {
+      const manifestPath = path.join(target, 'package.json');
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+      // The compiled JavaScript is platform-independent. Oryx installs packages
+      // on Linux; its build hook enforces the lockfile and checks runtime imports.
+      // Keep dependency declarations/lockfile unchanged, and never run tsc
+      // remotely against a package that intentionally excludes TypeScript sources.
+      manifest.scripts = {
+        start: 'node dist/server.js',
+        build: 'npm ci --omit=dev && node --input-type=module -e "await import(\'./dist/app.js\'); await import(\'@azure/identity\'); console.log(\'Linux runtime imports verified\')"',
+      };
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+    }
+    await writeFile(path.join(target, 'RELEASE.txt'), azureInstall
+      ? 'Compiled App Service release. Enable SCM_DO_BUILD_DURING_DEPLOYMENT and ENABLE_ORYX_BUILD: the package build hook installs locked production dependencies on Azure Linux and verifies imports. Start with node dist/server.js. No cloud deployment has been performed by staging.\n'
+      : 'App Service staging directory. Install locked production dependencies on Linux with Node 24, then ZIP the contents. Use node dist/server.js and disable remote build for this precompiled package. No cloud deployment has been performed by staging.\n');
     return target;
   } catch (error) {
     // Delete only the new directory owned by this invocation.

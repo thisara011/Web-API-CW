@@ -3,7 +3,7 @@ import path from 'node:path';
 import { stageAzureRelease } from '../release/stage.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-stageAzureRelease(root, path.join(root, 'artifacts')).then((directory) => {
+stageAzureRelease(root, path.join(root, 'artifacts'), process.argv.includes('--azure-install')).then((directory) => {
   // Also accepted as a GitHub Actions step output when appended to GITHUB_OUTPUT.
   console.log(`directory=${directory}`);
 }).catch(() => {

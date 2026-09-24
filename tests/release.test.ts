@@ -18,6 +18,21 @@ async function fixture() {
   return root;
 }
 describe('App Service release boundary', () => {
+  it('prepares an Azure dependency-install hook without changing source manifests or including private files', async () => {
+    const root = await fixture();
+    const original = { scripts: { build: 'tsc', dev: 'tsx src/server.ts' }, dependencies: { pg: '8.0.0' }, devDependencies: { typescript: '5.0.0' } };
+    await writeFile(path.join(root, 'package.json'), JSON.stringify(original));
+    const target = await stageAzureRelease(root, path.join(root, 'artifacts'), true);
+    const manifest = JSON.parse(await readFile(path.join(target, 'package.json'), 'utf8'));
+    expect(manifest.dependencies).toEqual(original.dependencies);
+    expect(manifest.devDependencies).toEqual(original.devDependencies);
+    expect(manifest.scripts.build).toContain('npm ci --omit=dev');
+    expect(manifest.scripts.build).toContain("import('./dist/app.js')");
+    expect(manifest.scripts.dev).toBeUndefined();
+    expect(JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'))).toEqual(original);
+    expect(await readFile(path.join(target, 'package-lock.json'), 'utf8')).toBe(await readFile(path.join(root, 'package-lock.json'), 'utf8'));
+    await expect(access(path.join(target, '.env'))).rejects.toThrow();
+  });
   it('includes runtime assets and migrations while excluding private/local files and dependencies not installed for Linux', async () => {
     const root = await fixture();
     const result = await stageAzureRelease(root, path.join(root, 'artifacts'));
