@@ -184,7 +184,7 @@ See [the database guide](docs/DATABASE.md) for the model, immutability rules, mi
 
 The plan targets the First-band descriptors, including the district generation summary. It does not guarantee a mark. A public HTTPS deployment, live Swagger documentation, an incremental repository, the student's own report and viva explanation are all part of completion.
 
-Next: **size and provision Azure App Service and PostgreSQL** using the [Azure delivery plan](docs/AZURE_PLAN.md). Azure login, the resource group, database authentication support and local release staging are ready. The coursework conflict between append-only readings, read-only analysts and full CRUD still needs clarification; offline credential administration is not HTTP CRUD.
+Next: **create Azure App Service and configure its restricted database identity**, then deploy the API using the [Azure delivery plan](docs/AZURE_PLAN.md). Azure PostgreSQL is provisioned, migrated and seeded; administrator Entra/TLS access is verified and published demo credentials are disabled. See [Azure database operations](docs/AZURE_DATABASE.md). The coursework conflict between append-only readings, read-only analysts and full CRUD still needs clarification; offline credential administration is not HTTP CRUD.
 
 ## Completion audit and deployment preparation
 

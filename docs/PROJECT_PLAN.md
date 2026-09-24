@@ -24,7 +24,7 @@ Aim for the First-band evidence in all eight rubric dimensions. The project is n
 | Deadline | Brief says to refer to LMS; actual date is unknown | Use dependency-ordered stages now; assign dates when supplied |
 | Design white paper | Local WSO2 paper found and read | Use as the likely reference; verify its edition with the student |
 | CRUD contradiction | Required clarification, detailed below | Core modeling, secure reads and append-only ingestion can proceed |
-| Hosting | Azure App Service plus PostgreSQL Flexible Server; CLI connected to Visual Studio Enterprise Subscription; empty `rg-slsea-coursework` created in Central India | User reports US$150 monthly credit. Authentication/release preparation verified locally; check remaining balance, service capacity and priced resource sizes before provisioning. See [Azure delivery plan](AZURE_PLAN.md) |
+| Hosting | Azure PostgreSQL 17/B1ms is provisioned in Central India, migrated and seeded; administrator Entra/TLS connection verified. Azure App Service remains next | User reports US$150 monthly credit. Reviewed app/database base estimate US$35.22/month; database-only estimate US$22.08/month is now billable. Runtime identity/grants and public API deployment remain pending. See [Azure delivery plan](AZURE_PLAN.md) |
 | Collaborator | Module leader's GitHub username is unknown | Prepare repository and share only when the user supplies the recipient and authorizes the invitation |
 | Declaration | Signed declaration required; a completed signed artifact has not been supplied | Student must review and sign their declaration |
 

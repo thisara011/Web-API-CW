@@ -1,0 +1,47 @@
+{
+  "verifiedAt": "2026-09-24T09:59:58.961Z",
+  "server": "psql-slsea-cw-ae65c5ba",
+  "database": "slsea",
+  "authentication": "Entra / Azure CLI administrator",
+  "postgres_version": "17.11",
+  "ssl": true,
+  "tls_version": "TLSv1.3",
+  "migrations": {
+    "applied": [],
+    "alreadyApplied": [
+      "001_initial_schema.sql",
+      "002_seed_metadata.sql",
+      "003_hierarchy_modification_times.sql"
+    ]
+  },
+  "counts": {
+    "provinces": 9,
+    "districts": 25,
+    "substations": 25,
+    "installations": 200,
+    "readings": 134600,
+    "analysts": 35,
+    "active_analysts": 0,
+    "active_devices": 0
+  },
+  "seed": [
+    {
+      "generator_version": "solar-coursework-v2",
+      "dataset_checksum": "d2ede42e9f6b0ef28926372151b70c182a20cb0b767ce5d22125be7a0a4e57ba",
+      "seed_reference": "2026-08-24T18:30:00.000Z"
+    }
+  ],
+  "readingTriggers": [
+    {
+      "tgname": "generation_readings_append_only",
+      "tgenabled": "O"
+    }
+  ],
+  "productionCredentialGuard": "passed using owner connection",
+  "limitations": [
+    "Runtime managed identity and grants not configured yet",
+    "No Web App or public API deployed",
+    "Historical synthetic data; no current telemetry claim",
+    "Backup restore not tested"
+  ]
+}

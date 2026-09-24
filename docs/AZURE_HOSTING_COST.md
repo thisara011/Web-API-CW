@@ -2,6 +2,8 @@
 
 Checked on 24 September 2026. This is the first hosting step: select and price the configuration before provisioning. No paid resource was created during this check.
 
+Subsequent status: the student authorized the next step and the PostgreSQL server was created with the configuration below. Its database is migrated and seeded; see [database operations and verification](AZURE_DATABASE.md). The Web App remains unprovisioned. The original pricing check above is historical, not a statement that the subscription still has no paid project resources.
+
 ## Proposed configuration
 
 | Resource | Configuration | Purpose |

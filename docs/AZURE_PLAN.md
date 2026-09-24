@@ -1,6 +1,6 @@
 # Azure delivery plan
 
-Selected by the student: **Azure App Service (Web App)** for the API and **Azure Database for PostgreSQL Flexible Server** for persistent data. Work proceeds one verified step at a time. Azure login and the empty resource group are verified; the API and database are not yet deployed.
+Selected by the student: **Azure App Service (Web App)** for the API and **Azure Database for PostgreSQL Flexible Server** for persistent data. Work proceeds one verified step at a time. PostgreSQL is now provisioned and its administrative Entra/TLS connection is verified; the Web App and public API are not yet deployed. See [database operations](AZURE_DATABASE.md).
 
 The current API already uses real PostgreSQL locally. Azure changes where the database runs and how the application authenticates and connects; it does not require replacing the relational model or rebuilding the API.
 
@@ -32,7 +32,7 @@ Application preparation is locally verified: TypeScript validation/build, 182 un
 
 Azure CLI is installed and the user's login was verified on 23 September 2026. The only returned subscription is **Visual Studio Enterprise Subscription**, with state **Enabled**. This is the actual Azure display name; the student describes the benefit as Student Ambassador. The credit balance and renewal/expiry have not been verified.
 
-The agent created **rg-slsea-coursework** in **Central India** after verifying that it did not exist. Azure returned **Succeeded**. Only the empty resource group was created; no App Service plan, Web App or PostgreSQL server was provisioned. The group's metadata location does not establish PostgreSQL/App Service capacity or subscription eligibility in that region.
+The agent created **rg-slsea-coursework** in **Central India** after verifying that it did not exist. It now contains **psql-slsea-cw-ae65c5ba**, PostgreSQL 17/B1ms with 32 GiB Premium SSD and seven-day locally redundant backups. Azure returned `Ready`; Entra-only authentication and a single-IP developer firewall are configured. The application connection code verified PostgreSQL 17.11 and TLSv1.3. No App Service plan or Web App has been created. Successful PostgreSQL provisioning does not establish App Service capacity.
 
 The current `compose.yaml` and `db/local` SQL contain intentionally public local fixture passwords. They are not suitable hosted artifacts and stay outside the selected native App Service release. The release staging command copies an explicit set of runtime files and excludes those files, private environment files and local Azure session metadata.
 
@@ -44,9 +44,9 @@ Confirmed by the student: Microsoft Student Ambassador benefit, with no project 
 
 Completed: resource group `rg-slsea-coursework`, location `centralindia`, provisioning state `Succeeded`. Select the actual Web App/database region together after checking service availability and the subscription's restrictions.
 
-The student reports **US$150 monthly credit** (24 September 2026). This is a user-reported allowance, not a verified remaining balance or approval to consume it all. Plan a small coursework configuration comfortably below that allowance; check current consumption and the credit reset/expiry before provisioning. No pricing tier or billable service has been provisioned. Do not send passwords, access tokens or publish profiles in chat.
+The student reports **US$150 monthly credit** (24 September 2026). This is a user-reported allowance, not a verified remaining balance or approval to consume it all. After reviewing the cost plan, the student authorized the next PostgreSQL step. The B1ms server is now running and billable (database-only base estimate US$22.08/month); current consumption and the credit reset/expiry remain unverified. Do not send passwords, access tokens or publish profiles in chat.
 
-Regional pricing and service catalogs have now been checked, and PostgreSQL/Quota provider registrations are complete. The [hosting configuration and cost](AZURE_HOSTING_COST.md) proposes Central India, Linux B1 and PostgreSQL B1ms with 32 GiB storage: US$35.22/month base at 730 hours, with a US$50 planning allowance. The generic quota response does not guarantee B1 capacity. Next: check global resource names and provision PostgreSQL with the reviewed settings. Live SQL role mapping and Linux CI packaging remain unverified. [Microsoft resource-group instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal).
+Regional pricing and service catalogs have now been checked, and PostgreSQL/Quota provider registrations are complete. The [hosting configuration and cost](AZURE_HOSTING_COST.md) selects Central India, Linux B1 and PostgreSQL B1ms with 32 GiB storage: US$35.22/month base at 730 hours, with a US$50 planning allowance. PostgreSQL is provisioned, migrated and seeded with 134,600 synthetic readings; public fixture credentials are disabled. See [database verification](evidence/AZURE_DATABASE_VERIFICATION.json). Next: create the Web App and restricted runtime identity. The generic quota response still does not guarantee App Service B1 capacity. Managed-identity SQL role mapping and Linux CI packaging remain unverified.
 
 ## Step 2 — Connection and release implementation
 

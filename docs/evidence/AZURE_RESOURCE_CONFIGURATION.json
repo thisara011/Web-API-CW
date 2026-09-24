@@ -1,0 +1,32 @@
+{
+  "backup": {
+    "backupRetentionDays": 7,
+    "earliestRestoreDate": "2026-09-24T06:53:39.116236+00:00",
+    "geoRedundantBackup": "Disabled"
+  },
+  "entraAuth": "Enabled",
+  "haMode": "Disabled",
+  "location": "Central India",
+  "name": "psql-slsea-cw-ae65c5ba",
+  "passwordAuth": "Disabled",
+  "publicNetworkAccess": "Enabled",
+  "sku": {
+    "name": "Standard_B1ms",
+    "tier": "Burstable"
+  },
+  "state": "Ready",
+  "storage": {
+    "autoGrow": "Disabled",
+    "iops": 120,
+    "storageSizeGb": 32,
+    "throughput": null,
+    "tier": "P4",
+    "type": "Premium_LRS"
+  },
+  "version": "17",
+  "firewall": {
+    "ruleCount": 1,
+    "singleIpOnly": true,
+    "ruleName": "developer-current-ip"
+  }
+}
