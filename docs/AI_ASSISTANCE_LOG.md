@@ -163,3 +163,13 @@ Retain later student prompts and material generation/revision instructions. Expo
 - Verification: TypeScript/build passed; 182 unit/HTTP and 106 real PostgreSQL integration tests passed on complete reruns. Initial timeout/socket failures and verification limits are recorded in [Azure preparation evidence](evidence/AZURE_PREPARATION.md). Local staging succeeded, and the compiled Azure CLI credential path obtained a PostgreSQL token without exposing it. Remote CI and Azure SQL connectivity are not claimed as tested.
 - Student checkpoint: explain why a database access token differs from the API's JWT, why managed identity needs a mapped PostgreSQL role and grants, why migrations use a separate identity, and why a Linux deployment package excludes local fixture/environment files.
 - Next: price and validate a small Azure configuration within the reported credit, provision identities/database, then deploy and collect live evidence. Coursework CRUD clarification, report authorship and viva preparation remain open.
+
+## Entry 013 — Azure sizing and pricing
+
+- Date: 24 September 2026; tool: Codex. User direction: “oky.lets slove one by one”. Completed the hosting selection/cost step using the Azure quotas skill, authenticated CLI checks and Microsoft documentation/pricing.
+- Confirmed the project resource group is empty and Central India catalogs list Linux B1, PostgreSQL B1ms, version 17 and 32 GiB storage. Installed the quota CLI extension and requested the required Quota/PostgreSQL provider registrations; this did not create a Web App or database.
+- Final checks confirmed both newly requested providers reached `Registered`.
+- Saved the public retail meters and a concrete configuration/cost plan: US$35.22 base per 730-hour month; US$50 planning allowance, not an enforced cap. Remaining credits and actual invoice rates are unverified.
+- Actual findings: initial quota lookup required provider registration; the subsequent response exposes only a wildcard regional limit with `isQuotaApplicable=false`. Did not misrepresent that as B1 capacity approval. Python certificate verification failed on the pricing endpoint; system curl worked with certificate checks enabled.
+- No application code changed, so application tests were not rerun. Checked JSON syntax, pricing arithmetic and documentation whitespace. Live SQL connectivity, global resource names, deployment capacity and remote release verification remain next-step checks.
+- Student checkpoint: distinguish a monthly estimate from a spending cap, a service catalog from available subscription capacity, and administrator access from the runtime identity.

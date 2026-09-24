@@ -46,7 +46,7 @@ Completed: resource group `rg-slsea-coursework`, location `centralindia`, provis
 
 The student reports **US$150 monthly credit** (24 September 2026). This is a user-reported allowance, not a verified remaining balance or approval to consume it all. Plan a small coursework configuration comfortably below that allowance; check current consumption and the credit reset/expiry before provisioning. No pricing tier or billable service has been provisioned. Do not send passwords, access tokens or publish profiles in chat.
 
-Next development step: check subscription capacity and regional pricing, record the concrete Web App/PostgreSQL configuration and projected cost, then provision the database and application identity. The application authentication and release-staging implementation is complete locally; live SQL role mapping and Linux CI packaging remain unverified. [Microsoft resource-group instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal).
+Regional pricing and service catalogs have now been checked, and PostgreSQL/Quota provider registrations are complete. The [hosting configuration and cost](AZURE_HOSTING_COST.md) proposes Central India, Linux B1 and PostgreSQL B1ms with 32 GiB storage: US$35.22/month base at 730 hours, with a US$50 planning allowance. The generic quota response does not guarantee B1 capacity. Next: check global resource names and provision PostgreSQL with the reviewed settings. Live SQL role mapping and Linux CI packaging remain unverified. [Microsoft resource-group instructions](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/manage-resource-groups-portal).
 
 ## Step 2 — Connection and release implementation
 
