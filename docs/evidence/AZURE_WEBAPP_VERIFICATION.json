@@ -1,0 +1,34 @@
+{
+  "verifiedAt": "2026-09-25T04:11:50.746666+00:00",
+  "origin": "https://app-slsea-cw-ae65c5ba.azurewebsites.net",
+  "deploymentId": "470ec402-507e-4272-8788-abbbce31b5c8",
+  "deploymentStatus": 4,
+  "deploymentComplete": true,
+  "sourceCommit": "ab0a7f752b66f2037ef718a992251261246369f0",
+  "artifactSha256": "d0ce8126c1453368f5b85895a875af791495c3c049ffc41d31e948e090d8579a",
+  "build": {
+    "mode": "azure-install",
+    "nodeVersion": "24.18.0",
+    "lockedProductionInstall": true,
+    "linuxRuntimeImportsVerified": true,
+    "clientResult": "Initial deploy command returned HTTP 504; backend deployment completed successfully."
+  },
+  "runtime": {
+    "alwaysOn": true,
+    "appCommandLine": "node dist/server.js",
+    "ftpsState": "Disabled",
+    "healthCheckPath": "/health/ready",
+    "linuxFxVersion": "NODE|24-lts",
+    "minTlsVersion": "1.2"
+  },
+  "identityType": "SystemAssigned",
+  "runtimeRole": "slsea_runtime",
+  "ownerSettingsAbsent": true,
+  "firewall": {
+    "ruleCount": 14,
+    "webAppOutboundAddressCount": 13,
+    "outboundAddressesAllCovered": true,
+    "allRulesSingleAddress": true,
+    "allowAllAzureRule": false
+  }
+}

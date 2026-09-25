@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026; updated: 23 September 2026. Status: Stages 1–6 and 8 implemented and locally verified; hierarchy/security completion audit and deployment preparation added. Stage 7 mutable-resource clarification, public deployment and submission work remain open. See the README and stage evidence for setup and results.
+Prepared: 21 September 2026; updated: 25 September 2026. Status: Stages 1–6 and 8 implemented and locally verified; hierarchy/security completion audit and deployment preparation added. Azure public deployment and restart persistence are verified; fresh demonstration data, Stage 7 mutable-resource clarification and submission work remain open. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -24,7 +24,7 @@ Aim for the First-band evidence in all eight rubric dimensions. The project is n
 | Deadline | Brief says to refer to LMS; actual date is unknown | Use dependency-ordered stages now; assign dates when supplied |
 | Design white paper | Local WSO2 paper found and read | Use as the likely reference; verify its edition with the student |
 | CRUD contradiction | Required clarification, detailed below | Core modeling, secure reads and append-only ingestion can proceed |
-| Hosting | Azure PostgreSQL 17/B1ms is provisioned in Central India, migrated and seeded; administrator Entra/TLS connection verified. Azure App Service remains next | User reports US$150 monthly credit. Reviewed app/database base estimate US$35.22/month; database-only estimate US$22.08/month is now billable. Runtime identity/grants and public API deployment remain pending. See [Azure delivery plan](AZURE_PLAN.md) |
+| Hosting | Azure App Service B1 and PostgreSQL 17/B1ms are deployed in Central India; managed-identity access and remote read/write/restart checks passed | Reviewed base estimate US$35.22/month; both resources billable. Dataset remains historical. See [Web App evidence](AZURE_WEBAPP.md) |
 | Collaborator | Module leader's GitHub username is unknown | Prepare repository and share only when the user supplies the recipient and authorizes the invitation |
 | Declaration | Signed declaration required; a completed signed artifact has not been supplied | Student must review and sign their declaration |
 
@@ -201,3 +201,5 @@ Declaration, AI appendix, diagrams, tables, code listings and references are out
 Viva checkpoints: explain a hierarchy query; trace an unauthorized request to its rejection; distinguish kW from cumulative kWh; calculate an energy difference; explain duplicate POST versus idempotent PUT; demonstrate `201`/Location and `304`; explain a stale `If-Match`; show a generated defect that was actually fixed; reproduce a clean setup and a live API request.
 
 Completion-audit implementation note: root and nested hierarchy directories now have scoped ancestor filters, stable name/UUID pages, counts/links and correct empty-parent handling. Added asynchronous bounded login verification, production secret/fixture checks, owner credential rotation, synthetic catch-up, HTTP smoke/device clients, production Compose and deployment/submission runbooks. A compiled local release rehearsal verified 25 fresh districts, private credentials, 708,201 readings and restart persistence. This is local evidence, not public hosting or completion of D1. See [completion audit](evidence/COMPLETION_AUDIT.md).
+
+Azure deployment note (25 September 2026): Linux release, public Swagger, managed-identity database access, authorization boundaries, ingestion/duplicates, conditional reads and restart persistence are verified. See [operations and evidence](AZURE_WEBAPP.md). Fresh synthetic demonstration data and the unresolved Stage 7 interpretation remain outstanding.

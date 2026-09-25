@@ -1,0 +1,65 @@
+{
+  "verifiedAt": "2026-09-24T10:16:25.138Z",
+  "role": "slsea_runtime",
+  "identityMappingMatches": true,
+  "privileges": {
+    "rolsuper": false,
+    "rolcreatedb": false,
+    "rolcreaterole": false,
+    "rolreplication": false,
+    "rolbypassrls": false,
+    "has_memberships": false,
+    "database_create": false,
+    "schema_create": false
+  },
+  "tables": [
+    {
+      "table": "provinces",
+      "read": true,
+      "insert": false,
+      "forbidden": false
+    },
+    {
+      "table": "districts",
+      "read": true,
+      "insert": false,
+      "forbidden": false
+    },
+    {
+      "table": "grid_substations",
+      "read": true,
+      "insert": false,
+      "forbidden": false
+    },
+    {
+      "table": "solar_installations",
+      "read": true,
+      "insert": false,
+      "forbidden": false
+    },
+    {
+      "table": "generation_readings",
+      "read": true,
+      "insert": true,
+      "forbidden": false
+    },
+    {
+      "table": "users",
+      "read": true,
+      "insert": false,
+      "forbidden": false
+    },
+    {
+      "table": "schema_migrations",
+      "read": false,
+      "insert": false,
+      "forbidden": false
+    },
+    {
+      "table": "seed_runs",
+      "read": false,
+      "insert": false,
+      "forbidden": false
+    }
+  ]
+}

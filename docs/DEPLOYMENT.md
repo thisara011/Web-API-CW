@@ -1,6 +1,6 @@
 # Deployment and operations runbook
 
-Status: Azure App Service and PostgreSQL Flexible Server are selected; no public URL is deployed. Follow the [Azure delivery plan](AZURE_PLAN.md) for the native Node 24 package and identity configuration. The Docker instructions below remain an alternative release path. Local tests do not establish public deployment, container execution or repository sharing. Confirm actual price, region and account limits before provisioning.
+Status: Azure App Service and PostgreSQL are deployed and publicly verified. See [Azure Web App operations](AZURE_WEBAPP.md) for the live URL, release modes and remote evidence. The Docker instructions below remain an alternative release path; Docker execution and remote CI are not claimed as verified.
 
 ## 1. Prepare the release
 

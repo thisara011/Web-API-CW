@@ -1,0 +1,89 @@
+{
+  "checkedAt": "2026-09-25T04:08:16.818Z",
+  "origin": "https://app-slsea-cw-ae65c5ba.azurewebsites.net",
+  "checks": [
+    {
+      "path": "/health/live",
+      "status": 200,
+      "milliseconds": 907
+    },
+    {
+      "path": "/health/ready",
+      "status": 200,
+      "milliseconds": 515
+    },
+    {
+      "path": "/openapi.json",
+      "status": 200,
+      "milliseconds": 247
+    },
+    {
+      "path": "/installations",
+      "status": 401,
+      "milliseconds": 118
+    },
+    {
+      "path": "/provinces?limit=1",
+      "status": 200,
+      "milliseconds": 180
+    },
+    {
+      "path": "/districts?limit=1",
+      "status": 200,
+      "milliseconds": 149
+    },
+    {
+      "path": "/substations?limit=1",
+      "status": 200,
+      "milliseconds": 156
+    },
+    {
+      "path": "/installations?limit=1",
+      "status": 200,
+      "milliseconds": 154
+    },
+    {
+      "path": "/installations?limit=1",
+      "status": 200,
+      "milliseconds": 125
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/overview",
+      "status": 200,
+      "milliseconds": 155
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/latest-reading",
+      "status": 200,
+      "milliseconds": 136
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings?limit=2",
+      "status": 200,
+      "milliseconds": 167
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings?limit=2",
+      "status": 304,
+      "milliseconds": 156
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53",
+      "status": 412,
+      "milliseconds": 153
+    },
+    {
+      "path": "/readings?limit=1&sort=-timestamp",
+      "status": 200,
+      "milliseconds": 3118
+    },
+    {
+      "path": "/districts/66cf2165-4a9c-5904-8040-387108878eca/generation-summary",
+      "status": 200,
+      "milliseconds": 168
+    }
+  ],
+  "sampleLatestTimestamp": "2026-08-24T18:30:00.000Z",
+  "sampleDistrictPowerCoverageComplete": false,
+  "note": "Read-only smoke: public-host persistence, full freshness, restricted analyst boundaries and ingestion require separate evidence."
+}

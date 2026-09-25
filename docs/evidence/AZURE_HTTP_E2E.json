@@ -1,0 +1,104 @@
+{
+  "checkedAt": "2026-09-25T04:09:39.148Z",
+  "origin": "https://app-slsea-cw-ae65c5ba.azurewebsites.net",
+  "checks": [
+    {
+      "path": "/districts?limit=100",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/districts?limit=100",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/districts/66cf2165-4a9c-5904-8040-387108878eca",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/districts?limit=100",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/districts/7c66674b-9cfa-5406-883f-56f799f464ae",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/installations",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/latest-reading",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/installations/019ed1af-cfbf-5cfd-afb3-46c626e2d8ce/readings",
+      "method": "POST",
+      "status": 403
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings",
+      "method": "POST",
+      "status": 403
+    },
+    {
+      "path": "/readings?limit=1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/readings/d1fe9b02-1a2e-438d-a3b4-af85994fbc23",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53/readings",
+      "method": "POST",
+      "status": 409
+    },
+    {
+      "path": "/readings?limit=1",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "provincialScopeVerified": true,
+  "districtScopeVerified": true,
+  "countBefore": 134600,
+  "submittedSyntheticReading": {
+    "timestamp": "2026-08-24T18:45:00.000Z",
+    "powerKw": 0,
+    "cumulativeEnergyKwh": 2051.092,
+    "voltage": 230
+  },
+  "location": "/readings/d1fe9b02-1a2e-438d-a3b4-af85994fbc23",
+  "created": {
+    "id": "d1fe9b02-1a2e-438d-a3b4-af85994fbc23",
+    "installationId": "10fb36d1-26c4-5270-a027-811c1c7c2a53",
+    "timestamp": "2026-08-24T18:45:00.000Z",
+    "powerKw": 0,
+    "cumulativeEnergyKwh": 2051.092,
+    "voltage": 230,
+    "receivedAt": "2026-09-25T04:09:43.554Z"
+  },
+  "countAfter": 134601,
+  "completed": true,
+  "restartVerification": {
+    "checkedAt": "2026-09-25T04:11:35.078Z",
+    "readinessStatus": 200,
+    "newCredentialExchange": true,
+    "createdReadingUnchanged": true,
+    "count": 134601
+  }
+}
