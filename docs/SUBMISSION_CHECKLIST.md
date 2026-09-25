@@ -6,8 +6,9 @@ These are AI-assisted working notes, not report prose. The brief requires the st
 
 - [ ] Resolve D1 in PROJECT_PLAN.md: which mutable resource and principal satisfy full CRUD while readings remain immutable and analysts remain read-only?
 - [ ] Implement and verify that agreed HTTP CRUD path, including replacement, preconditions, repeated requests and deletion restrictions.
-- [ ] Select the hosting provider/account and budget; execute DEPLOYMENT.md.
-- [ ] Verify public HTTPS, live Swagger, current synthetic coverage, restricted marker credentials and persistence after restart.
+- [x] Select hosting/account and budget; deploy Azure App Service and PostgreSQL. See AZURE_WEBAPP.md.
+- [x] Verify public HTTPS, live Swagger, private demonstration credentials and persistence after restart. See Azure HTTP evidence.
+- [ ] Verify current synthetic coverage immediately before the marking demonstration; a past successful check does not stay fresh indefinitely.
 - [ ] Confirm a successful CI run, container build and repository access for the named module leader.
 - [ ] Write the six required report sections in the student's own words, 2250–2750 words. PROJECT_PLAN.md contains an evidence-based outline and suggested budget.
 - [ ] Assemble the actual AI prompt/code-assistance appendix, including review corrections recorded in AI_ASSISTANCE_LOG.md. Retain the original conversation/export; this log is a summary, not a verbatim transcript.

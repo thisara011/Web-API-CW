@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-09-25T05:14:39.241Z",
+  "synthetic": true,
+  "installations": 200,
+  "readings": 738200,
+  "cutoff": "2026-09-25T05:00:00.000Z",
+  "allIntervalsAligned": true,
+  "allInstallationsGapFree": true,
+  "previousHttpReadingPreserved": true
+}

@@ -11,8 +11,8 @@ Status key: **Verified locally** means repository evidence exists, not that a fi
 | Coverage | 15 | Entire required surface; analytical controls; agreed CRUD; working district summary | 4–8 | Read/append/summary coverage verified locally; CRUD open |
 | Implementation with generated code | 10 | Coherent code; actual review/repair records; prompt and AI-aid disclosure; student explanation | Every stage | Implementation, regression tests and review log maintained; student critique pending |
 | Functionality against seed data | 5 | Every endpoint exercised against valid seed plus deliberate edge cases | 3–10 | Seed integration tests and compiled local release rehearsal passed |
-| Deployment and operation | 10 | Public HTTPS, live Swagger, incremental history, shared repository | 1, 9–10 | Deployment files and runbook prepared; public host/sharing unverified |
-| Security and authentication | 15 | JWT bearer scopes; installation-only writes; jurisdiction reads without leakage; HTTPS; scope/attribute tradeoff explanation | 4–10 | Local scope, credential and production checks pass; hosted HTTPS pending |
+| Deployment and operation | 10 | Public HTTPS, live Swagger, incremental history, shared repository | 1, 9–10 | Azure HTTPS, Swagger and restart persistence verified; repository sharing unverified |
+| Security and authentication | 15 | JWT bearer scopes; installation-only writes; jurisdiction reads without leakage; HTTPS; scope/attribute tradeoff explanation | 4–10 | Local checks pass; hosted HTTPS and selected role/device boundaries verified |
 | Report quality | 10 | Student-authored justification, Level 2 analysis, evaluation, declaration and disclosure | 10 | Planned |
 | Total | 100 | The viva validates these marks; it is not an extra weighted component | | |
 
@@ -48,8 +48,8 @@ Status key: **Verified locally** means repository evidence exists, not that a fi
 | S02 | National/province/district reads enforce jurisdiction | B pp3–4,6; R p5 | Negative tests for all resources, counts, links, aggregates and cache responses | Tested for hierarchy/readings, history count/link boundaries, summaries and conditional authorization |
 | S03 | JWT bearer with scopes for First-band descriptor | R p5 | Verified signature/claims/expiry, principal type and scopes | Implemented/tested for signed JWTs and scope gates |
 | S04 | Explain scopes versus finer-grained attribute checks | R p5 | Student traces both operation scope and resource jurisdiction checks | Implemented: scope gate plus jurisdiction SQL predicate |
-| O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Prepared; compiled local rehearsal passed, public HTTPS pending |
-| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Local OpenAPI documents summaries, history and conditional behavior; public deployment pending |
+| O01 | Public operational deployment over HTTPS | B pp6,8; R p4 | Remote smoke test from public URL with persistent seeded data | Verified on Azure: public smoke, ingestion and restart persistence; see AZURE_WEBAPP.md |
+| O02 | Live OpenAPI/Swagger interface | B p6; R p4 | Live paths, schemas, JWT security and negative examples match behavior | Public Swagger/OpenAPI verified on Azure; see AZURE_WEBAPP.md |
 | O03 | Incremental commits and repository shared with module leader | B pp6,8; R p4 | Actual history and confirmed collaborator invitation | Incremental local history exists; invitation/remote CI confirmation pending |
 | I01 | Complete prompt and AI-aid disclosure | B pp1,7; R pp3,6 | Maintained log, appendix assembled from actual activity | Planning, Stages 1–6/8 and completion audit logged |
 | I02 | Critical evaluation of generated output | R p3 | Actual findings, fixes, regression evidence and student explanation | Stage and completion-audit findings/repairs recorded; student explanation pending |
@@ -75,3 +75,5 @@ These remain unchecked until actual evidence exists. See brief pp8–9 and rubri
 No planning artifact, passing local test or target band substitutes for these submission actions.
 
 Local completion evidence: [completion audit](evidence/COMPLETION_AUDIT.md), [sanitized release smoke](evidence/LOCAL_RELEASE_SMOKE.json), [deployment runbook](DEPLOYMENT.md) and [student submission checklist](SUBMISSION_CHECKLIST.md). These do not close A06/A08 or public submission gates.
+
+Azure evidence (25 September 2026): [Web App operations](AZURE_WEBAPP.md), public smoke and HTTP end-to-end evidence confirm operational deployment. Submission-time availability/freshness must be checked again. A06/A08 remain open pending the lecturer guidance document the student has offered to upload.

@@ -1,6 +1,6 @@
 # Azure Web App operations
 
-Verified 25 September 2026: the public API runs on Linux App Service B1 and connects to Azure PostgreSQL through its system-assigned managed identity. A Web App restart preserved all 134,601 readings, including the synthetic reading added through the public API.
+Initial deployment verification, 25 September 2026: the public API runs on Linux App Service B1 and connects to Azure PostgreSQL through its system-assigned managed identity. A Web App restart preserved all 134,601 readings, including the synthetic reading added through the public API.
 
 - [Swagger UI](https://app-slsea-cw-ae65c5ba.azurewebsites.net/docs/)
 - [Readiness](https://app-slsea-cw-ae65c5ba.azurewebsites.net/health/ready)
@@ -58,6 +58,21 @@ Do not rerun migrations, seed or credential rotation as part of app startup. The
 
 [End-to-end evidence](evidence/AZURE_HTTP_E2E.json) records provincial/district collection boundaries and hidden outside-scope resources, device read denial, wrong-device and analyst write denial, successful POST/201 with canonical Location/GET, duplicate/409 and count growth from 134,600 to 134,601. After an actual Web App restart, a fresh login retrieved the identical reading and unchanged count.
 
-The added reading is explicitly synthetic and historical: the next 15-minute night-time slot after the seed cutoff, with zero power and unchanged energy. This does not establish fresh telemetry. A summary correctly reported incomplete current power coverage. Before a live marking demonstration, use the documented append-only synthetic catch-up procedure and check freshness; do not present seed history as current measurements.
+The added reading is explicitly synthetic and historical: the next 15-minute night-time slot after the seed cutoff, with zero power and unchanged energy. At that initial deployment check, a summary correctly reported incomplete current power coverage. The later explicit refresh below fills the intervening synthetic history. Before a live marking demonstration, use the documented append-only synthetic catch-up procedure and check freshness; do not present seed history as current measurements.
 
-Next coursework work: prepare fresh demo data, resolve the lecturer's mutable-resource CRUD interpretation, implement the agreed scope, and finish student-authored report, declaration and viva evidence. Recovery testing, load capacity and remote CI remain separate from this successful deployment verification.
+## Refresh synthetic demonstration data
+
+Completed 25 September 2026: appended 603,599 synthetic readings through **05:00 UTC / 10:30 Asia/Colombo**, bringing the total to **738,200**. Public requests verified complete power and energy coverage across all 25 districts and 200 installations, with zero missing midnight baselines, stale sites or invalid counters. See [dated freshness evidence](evidence/AZURE_FRESHNESS.json). [History verification](evidence/AZURE_HISTORY_COVERAGE.json) also confirmed aligned, gap-free intervals for every installation and preservation of the earlier HTTP-created reading. This is a point-in-time demonstration result, not a recurring feed.
+
+From the project directory, use the separate Azure administrator configuration:
+
+```sh
+ALLOW_SYNTHETIC_CATCHUP=true node --env-file=.env.azure-admin dist/cli/catch-up.js
+node --env-file=.env.azure-smoke dist/cli/smoke.js
+```
+
+The first command appends observations through the latest completed 15-minute slot for the 200 seeded installations. It preserves existing rows, uses a transaction per installation and can resume after a partial run. The database must contain only synthetic coursework telemetry. Do not run the ordinary npm catch-up command against an unintended local environment or install owner settings in the Web App.
+
+Check all 25 district summaries after completion: `powerCoverageComplete` and `energyCoverageComplete` must be true, with no missing midnight baselines, invalid counters or stale installations. A single sample in the smoke output is insufficient to establish national coverage. Record the actual cutoff and verification time; the API's freshness window is 30 minutes, so repeat this explicit operation before a later demonstration. No recurring job is configured.
+
+Next coursework work: resolve the lecturer's mutable-resource CRUD interpretation, implement the agreed scope, and finish student-authored report, declaration and viva evidence. Recovery testing, load capacity and remote CI remain separate from this successful deployment verification.

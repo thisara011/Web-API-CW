@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026; updated: 25 September 2026. Status: Stages 1–6 and 8 implemented and locally verified; hierarchy/security completion audit and deployment preparation added. Azure public deployment and restart persistence are verified; fresh demonstration data, Stage 7 mutable-resource clarification and submission work remain open. See the README and stage evidence for setup and results.
+Prepared: 21 September 2026; updated: 25 September 2026. Status: Stages 1–6 and 8 implemented and locally verified; hierarchy/security completion audit and deployment preparation added. Azure public deployment and restart persistence are verified; fresh synthetic coverage was verified on 25 September 2026; Stage 7 mutable-resource clarification and submission work remain open. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -23,7 +23,7 @@ Aim for the First-band evidence in all eight rubric dimensions. The project is n
 | Backend stack | TypeScript, Express and PostgreSQL selected when the student requested completion of Stage 1 | Installed with locked dependencies; no stack is mandated by either PDF |
 | Deadline | Brief says to refer to LMS; actual date is unknown | Use dependency-ordered stages now; assign dates when supplied |
 | Design white paper | Local WSO2 paper found and read | Use as the likely reference; verify its edition with the student |
-| CRUD contradiction | Required clarification, detailed below | Core modeling, secure reads and append-only ingestion can proceed |
+| CRUD contradiction | Student reports lecturer guidance and will upload the document; awaiting its contents | Core modeling, secure reads and append-only ingestion can proceed |
 | Hosting | Azure App Service B1 and PostgreSQL 17/B1ms are deployed in Central India; managed-identity access and remote read/write/restart checks passed | Reviewed base estimate US$35.22/month; both resources billable. Dataset remains historical. See [Web App evidence](AZURE_WEBAPP.md) |
 | Collaborator | Module leader's GitHub username is unknown | Prepare repository and share only when the user supplies the recipient and authorizes the invitation |
 | Declaration | Signed declaration required; a completed signed artifact has not been supplied | Student must review and sign their declaration |
@@ -203,3 +203,7 @@ Viva checkpoints: explain a hierarchy query; trace an unauthorized request to it
 Completion-audit implementation note: root and nested hierarchy directories now have scoped ancestor filters, stable name/UUID pages, counts/links and correct empty-parent handling. Added asynchronous bounded login verification, production secret/fixture checks, owner credential rotation, synthetic catch-up, HTTP smoke/device clients, production Compose and deployment/submission runbooks. A compiled local release rehearsal verified 25 fresh districts, private credentials, 708,201 readings and restart persistence. This is local evidence, not public hosting or completion of D1. See [completion audit](evidence/COMPLETION_AUDIT.md).
 
 Azure deployment note (25 September 2026): Linux release, public Swagger, managed-identity database access, authorization boundaries, ingestion/duplicates, conditional reads and restart persistence are verified. See [operations and evidence](AZURE_WEBAPP.md). Fresh synthetic demonstration data and the unresolved Stage 7 interpretation remain outstanding.
+
+CRUD clarification update (25 September 2026): the student indicated they have a lecturer guidance document to upload. Await that document before choosing or implementing the mutable-resource/principal interpretation; no maintenance-role proposal has been accepted.
+
+Synthetic demo refresh (25 September 2026): 603,599 appended readings, total 738,200, cutoff 05:00 UTC. All 25 districts/200 installations had complete fresh power and energy coverage at verification. See [freshness evidence](evidence/AZURE_FRESHNESS.json). Refresh again before a later demonstration; no recurring generator is configured.
