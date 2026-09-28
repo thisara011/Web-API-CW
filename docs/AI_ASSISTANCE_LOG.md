@@ -207,3 +207,17 @@ Retain later student prompts and material generation/revision instructions. Expo
 - Updated the Azure refresh instructions, requirement status and submission checklist. No full application test rerun was necessary for data/documentation operations.
 - User said they have lecturer guidance, then said they have a document to upload. Requested the attachment and left the mutable-resource/principal decision pending its contents; did not adopt the proposed maintenance role or claim lecturer approval.
 - Student checkpoint: explain why explicit catch-up preserves history, why 15-minute slots and midnight baselines matter, why coverage expires, and why HTTP CRUD must follow the lecturer's clarification.
+
+## Entry 017 — Recheck supplied assessment documents
+
+- Date: 25 September 2026; tool: Codex. Student clarified that the original brief and rubric are the complete guidance and were already supplied. Reread all nine brief pages and seven rubric pages directly from the supplied PDFs using local PDFKit text extraction.
+- Corrected the mistaken expectation of another lecturer document in the project plan and requirement notes. Brief p4 requires append-only GenerationReading; brief p5 asks for create/retrieve/update/delete semantics; rubric p3 requires full write-path CRUD. Neither document identifies a mutable alternative or explicitly authorizes a maintenance principal.
+- Retained the installation-metadata/maintenance-role proposal as an unapproved design interpretation, without claiming that it automatically satisfies the rubric. No runtime, permissions, database records or deployed resources changed. Documentation whitespace checked; application tests were not rerun for this correction.
+
+## Entry 018 — Installation metadata lifecycle
+
+- Date: 28 September 2026; tool: Codex. Student asked to resume completion. Implemented the stated maintenance-principal/installation-metadata interpretation of D1, documenting that the supplied PDFs do not explicitly select this resource or role and that lecturer acceptance is unconfirmed.
+- Added migration 004, owner-only private maintenance credential provisioning, a distinct maintenance JWT kind/scope and protected metadata endpoints. Full PUT requires all metadata fields and If-Match; row/advisory locks evaluate preconditions atomically with updates/deletion. Identical PUT retains its representation; DELETE is limited to assets without readings. Credential fields remain outside HTTP metadata.
+- Retained immutable meter/substation identity and readings, guarded historical commissioning dates, and invalidated old device tokens when active status changes. Runtime metadata grants are explicit, optional and column-restricted; users and credential hashes stay outside runtime writes.
+- Verification: typecheck/build passed, 188 unit/HTTP tests and 117 real PostgreSQL integration tests passed. A temporary PostgreSQL helper was installed outside project dependencies after the previous test instance was removed. Sandbox socket restrictions caused the initial HTTP failures; outside-sandbox checks passed. PostgreSQL's RESTRICT violation used code 23001; repaired conflict mapping and reran the full integration suite.
+- Student checkpoint: explain the assessment ambiguity and chosen extension, strong ETags/preconditions, replacement versus partial update, repeat DELETE semantics, why retained-history deletion fails, and why per-device credential revocation must survive reactivation. No report prose, signature, lecturer approval or collaborator invitation is claimed.

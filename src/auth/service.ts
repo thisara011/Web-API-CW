@@ -6,7 +6,7 @@ import { issueToken, type Principal } from './tokens.js';
 
 const dummyHash = passwordHash('unavailable-account-dummy-password', 'unavailable-account-dummy-salt');
 
-export type TokenRequest = { principalType: 'analyst' | 'installation'; identifier: string; password: string };
+export type TokenRequest = { principalType: 'analyst' | 'installation' | 'maintenance'; identifier: string; password: string };
 
 export class AuthenticationService {
   private inFlight = 0;
@@ -20,13 +20,16 @@ export class AuthenticationService {
 
   private async verifyAndIssue(input: TokenRequest): Promise<{ accessToken: string; tokenType: 'Bearer'; expiresIn: number }> {
     let principal: Principal | undefined;
-    if (input.principalType === 'analyst') {
-      const result = await this.pool.query<{ id: string; password_hash: string; credential_version: number; role: 'national' | 'provincial' | 'district'; province_id: string | null; district_id: string | null }>(
+    if (input.principalType !== 'installation') {
+      const result = await this.pool.query<{ id: string; password_hash: string; credential_version: number; role: 'national' | 'provincial' | 'district' | 'maintenance'; province_id: string | null; district_id: string | null }>(
         'SELECT id, password_hash, credential_version, role, province_id, district_id FROM users WHERE email = $1 AND is_active = true', [input.identifier.toLowerCase()],
       );
       const row = result.rows[0];
       const valid = await verifyPassword(input.password, row?.password_hash ?? dummyHash);
-      if (row && valid && !(this.config.NODE_ENV === 'production' && row.password_hash.startsWith('scrypt$user:'))) principal = { kind: 'analyst', subject: row.id, credentialVersion: row.credential_version, role: row.role, provinceId: row.province_id, districtId: row.district_id, scopes: ['geography:read', 'installation:read'] };
+      if (row && valid && !(this.config.NODE_ENV === 'production' && row.password_hash.startsWith('scrypt$user:'))) {
+        if (input.principalType === 'maintenance' && row.role === 'maintenance') principal = { kind: 'maintenance', subject: row.id, credentialVersion: row.credential_version, scopes: ['installation:manage'] };
+        else if (input.principalType === 'analyst' && row.role !== 'maintenance') principal = { kind: 'analyst', subject: row.id, credentialVersion: row.credential_version, role: row.role, provinceId: row.province_id, districtId: row.district_id, scopes: ['geography:read', 'installation:read'] };
+      }
     } else {
       const result = await this.pool.query<{ id: string; credential_hash: string | null; credential_version: number }>(
         'SELECT id, credential_hash, credential_version FROM solar_installations WHERE meter_id = $1 AND is_active = true', [input.identifier],

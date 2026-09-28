@@ -37,3 +37,16 @@ export async function disableFixtureCredentials(pool: Pool) {
   } catch (error) { await client.query('ROLLBACK'); throw error; }
   finally { client.release(); }
 }
+
+// Separate, explicit owner operation: never create maintenance credentials via public HTTP.
+export async function provisionMaintenanceUser(pool: Pool, input: { email: string; password: string }) {
+  const parsed=z.object({email:z.email().max(254).transform(v=>v.trim().toLowerCase()),password:z.string().min(20).max(256)}).strict().safeParse(input);
+  if (!parsed.success) throw new Error('Supply a valid MAINTENANCE_EMAIL and MAINTENANCE_PASSWORD (20–256 characters)');
+  if (parsed.data.password==='Coursework-Demo-Password-2026!'||parsed.data.password.startsWith('device-SLSEA-')) throw new Error('Published fixture passwords cannot be used for maintenance');
+  const hash=passwordHash(parsed.data.password,randomBytes(24).toString('base64url'));
+  const r=await pool.query(`INSERT INTO users(email,password_hash,role) VALUES ($1,$2,'maintenance') ON CONFLICT(email)
+    DO UPDATE SET password_hash=EXCLUDED.password_hash,credential_version=users.credential_version+1,is_active=true
+    WHERE users.role='maintenance' RETURNING id,credential_version`,[parsed.data.email,hash]);
+  if(!r.rows[0])throw new Error('Email belongs to a different principal role');
+  return {id:r.rows[0].id as string,credentialVersion:r.rows[0].credential_version as number};
+}

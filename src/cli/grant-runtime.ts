@@ -31,8 +31,8 @@ async function grant(): Promise<void> {
       || runtimeIdentity.role === migrationIdentity.role) {
       throw new Error('Runtime and migration connections must use the same database server and different roles');
     }
-    await grantRuntimeAccess(migration.pool, { role: runtimeIdentity.role });
-    console.log('Runtime database permissions configured: domain reads and append-only reading inserts');
+    await grantRuntimeAccess(migration.pool, { role: runtimeIdentity.role, installationMaintenance: process.env.ALLOW_INSTALLATION_MAINTENANCE === 'true' });
+    console.log(process.env.ALLOW_INSTALLATION_MAINTENANCE === 'true' ? 'Runtime permissions configured: domain reads, append-only readings and restricted installation metadata lifecycle' : 'Runtime database permissions configured: domain reads and append-only reading inserts');
   } finally {
     await Promise.all([runtime?.close(), migration.close()]);
   }

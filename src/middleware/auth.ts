@@ -17,7 +17,7 @@ export function requireBearer(config: Environment, scope: string, pool: Pool): R
         ? await pool.query('SELECT id FROM solar_installations WHERE id = $1 AND is_active AND credential_version = $2', [principal.subject, principal.credentialVersion])
         : await pool.query(`SELECT id FROM users WHERE id = $1 AND is_active AND credential_version = $2
             AND role = $3 AND province_id IS NOT DISTINCT FROM $4::uuid AND district_id IS NOT DISTINCT FROM $5::uuid`,
-          [principal.subject, principal.credentialVersion, principal.role, principal.provinceId, principal.districtId]);
+          [principal.subject, principal.credentialVersion, principal.kind === 'maintenance' ? 'maintenance' : principal.role, principal.kind === 'maintenance' ? null : principal.provinceId, principal.kind === 'maintenance' ? null : principal.districtId]);
       if (!current.rows[0]) throw new ApiError(401, 40102, 'Invalid or revoked bearer token');
       if (!principal.scopes.includes(scope)) throw new ApiError(403, 40301, 'Principal is not permitted to access this resource');
       request.principal = principal;

@@ -3,7 +3,7 @@
   "info": {
     "title": "SLSEA Solar Generation API",
     "version": "0.1.0",
-    "description": "SLSEA Solar Generation API, Stages 1\u20136 and 8. Public health and OpenAPI; JWT-protected hierarchy, immutable ingestion, scoped history, operational reads and district generation summaries. Current paths are relative to the host root. Business GET/HEAD uses authorized ETag revalidation. Mutable CRUD clarification and deployment remain outstanding."
+    "description": "SLSEA API: JWT-protected hierarchy and jurisdiction reads, immutable device ingestion, history, summaries and installation metadata maintenance. Metadata CRUD is a documented interpretation of the conflicting append-only/full-CRUD requirements; no lecturer approval is implied."
   },
   "servers": [
     {
@@ -36,6 +36,10 @@
     {
       "name": "Summaries",
       "description": "Jurisdiction-scoped power/energy aggregates with explicit measurement coverage."
+    },
+    {
+      "name": "Maintenance",
+      "description": "Separate maintenance principal; installation metadata CRUD with history-preserving restrictions."
     }
   ],
   "paths": {
@@ -2892,6 +2896,394 @@
         "description": "Requires geography:read and an active analyst. Jurisdiction is enforced before cache validation. GET supports HEAD; OPTIONS advertises GET, HEAD, OPTIONS. Mutations return 405. ETags reflect the authorized representation; date preconditions have no effect because this resource has no complete modification clock. Ordered by name (siteLabel for installations), then UUID. Count and page share a database snapshot. Empty visible parents return 200; hidden or absent nested parents return 404. Filters intersect jurisdiction; hidden root filters yield an empty page. Unknown/repeated parameters return 400. Pagination links are relative and preserve filters; concurrent changes may shift later pages.",
         "summary": "List authorized installations"
       }
+    },
+    "/maintenance/installations": {
+      "get": {
+        "tags": [
+          "Maintenance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "listMaintenanceInstallations",
+        "summary": "List metadata with stable pagination",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaintenancePage"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Last-Modified": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Unchanged representation; empty body."
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Maintenance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createInstallationMetadata",
+        "summary": "Create an installation; credentials are provisioned separately offline",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallationMetadataInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationMetadata"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Last-Modified": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Location": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/MetadataConflict"
+          }
+        }
+      }
+    },
+    "/maintenance/installations/{id}": {
+      "get": {
+        "tags": [
+          "Maintenance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getInstallationMetadata",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-None-Match",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationMetadata"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Last-Modified": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not modified; empty body."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Maintenance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "replaceInstallationMetadata",
+        "summary": "Replace all editable metadata; identity fields must match stored values",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-Match",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Use the strong ETag from the atomic metadata representation, or * to require existence."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallationMetadataInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationMetadata"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Last-Modified": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/MetadataConflict"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "428": {
+            "$ref": "#/components/responses/PreconditionRequired"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Maintenance"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "deleteEmptyInstallation",
+        "summary": "Delete an installation only if it has no readings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-Match",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Use the strong ETag from the atomic metadata representation, or * to require existence."
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "406": {
+            "$ref": "#/components/responses/NotAcceptable"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "204": {
+            "description": "Deleted; empty body."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/MetadataConflict"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "428": {
+            "$ref": "#/components/responses/PreconditionRequired"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3076,7 +3468,8 @@
             "type": "string",
             "enum": [
               "analyst",
-              "installation"
+              "installation",
+              "maintenance"
             ]
           },
           "identifier": {
@@ -3861,6 +4254,159 @@
             ]
           }
         }
+      },
+      "InstallationMetadataInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "gridSubstationId",
+          "meterId",
+          "siteLabel",
+          "capacityKw",
+          "commissionedDate",
+          "isActive"
+        ],
+        "properties": {
+          "gridSubstationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable after creation."
+          },
+          "meterId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Immutable after creation."
+          },
+          "siteLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "capacityKw": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 999999999.999,
+            "multipleOf": 0.001
+          },
+          "commissionedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Immutable once readings exist."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Changing this invalidates earlier device tokens."
+          }
+        }
+      },
+      "InstallationMetadata": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "gridSubstationId",
+          "meterId",
+          "siteLabel",
+          "capacityKw",
+          "commissionedDate",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gridSubstationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable after creation."
+          },
+          "meterId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Immutable after creation."
+          },
+          "siteLabel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "capacityKw": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 999999999.999,
+            "multipleOf": 0.001
+          },
+          "commissionedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Immutable once readings exist."
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Changing this invalidates earlier device tokens."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MaintenancePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "count",
+          "limit",
+          "offset",
+          "next",
+          "previous"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallationMetadata"
+            }
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previous": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       }
     },
     "responses": {
@@ -4084,6 +4630,26 @@
             }
           }
         },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "MetadataConflict": {
+        "description": "Duplicate meter, invalid substation, identity/commissioning change or deletion of a site with retained readings.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            }
+          }
+        }
+      },
+      "PreconditionRequired": {
+        "description": "If-Match must be supplied for PUT or DELETE.",
         "content": {
           "application/json": {
             "schema": {

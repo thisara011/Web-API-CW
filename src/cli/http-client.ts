@@ -8,7 +8,7 @@ export function apiOrigin(value: string | undefined): string {
   return url.origin;
 }
 
-export async function exchangeToken(origin: string, principalType: 'analyst' | 'installation', identifier: string | undefined, password: string | undefined) {
+export async function exchangeToken(origin: string, principalType: 'analyst' | 'installation' | 'maintenance', identifier: string | undefined, password: string | undefined) {
   if (!identifier || !password) throw new Error('Supply the requested identifier and password environment variables');
   const response = await fetch(`${origin}/auth/token`, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10_000),
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ principalType, identifier, password }) });

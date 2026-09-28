@@ -23,7 +23,7 @@ Aim for the First-band evidence in all eight rubric dimensions. The project is n
 | Backend stack | TypeScript, Express and PostgreSQL selected when the student requested completion of Stage 1 | Installed with locked dependencies; no stack is mandated by either PDF |
 | Deadline | Brief says to refer to LMS; actual date is unknown | Use dependency-ordered stages now; assign dates when supplied |
 | Design white paper | Local WSO2 paper found and read | Use as the likely reference; verify its edition with the student |
-| CRUD contradiction | Student reports lecturer guidance and will upload the document; awaiting its contents | Core modeling, secure reads and append-only ingestion can proceed |
+| CRUD contradiction | Both supplied PDFs reread in full; they contain the unresolved requirements below | Core modeling, secure reads and append-only ingestion can proceed |
 | Hosting | Azure App Service B1 and PostgreSQL 17/B1ms are deployed in Central India; managed-identity access and remote read/write/restart checks passed | Reviewed base estimate US$35.22/month; both resources billable. Dataset remains historical. See [Web App evidence](AZURE_WEBAPP.md) |
 | Collaborator | Module leader's GitHub username is unknown | Prepare repository and share only when the user supplies the recipient and authorizes the invitation |
 | Declaration | Signed declaration required; a completed signed artifact has not been supplied | Student must review and sign their declaration |
@@ -204,6 +204,8 @@ Completion-audit implementation note: root and nested hierarchy directories now 
 
 Azure deployment note (25 September 2026): Linux release, public Swagger, managed-identity database access, authorization boundaries, ingestion/duplicates, conditional reads and restart persistence are verified. See [operations and evidence](AZURE_WEBAPP.md). Fresh synthetic demonstration data and the unresolved Stage 7 interpretation remain outstanding.
 
-CRUD clarification update (25 September 2026): the student indicated they have a lecturer guidance document to upload. Await that document before choosing or implementing the mutable-resource/principal interpretation; no maintenance-role proposal has been accepted.
+CRUD clarification update (25 September 2026): the student clarified that the previously supplied brief and rubric are the complete guidance, not a separate pending document. Both were reread in full (9 and 7 pages). Brief p4 explicitly requires append-only readings; brief p5 asks for create/retrieve/update/delete semantics; rubric p3 requires full CRUD on the write path. Neither identifies another writable resource or a maintenance principal. The maintenance-role proposal remains a design interpretation, not a stated or lecturer-approved requirement. Do not request another upload of these same documents.
 
 Synthetic demo refresh (25 September 2026): 603,599 appended readings, total 738,200, cutoff 05:00 UTC. All 25 districts/200 installations had complete fresh power and energy coverage at verification. See [freshness evidence](evidence/AZURE_FRESHNESS.json). Refresh again before a later demonstration; no recurring generator is configured.
+
+Stage 7 implementation (28 September 2026): proceeded with the documented installation-metadata/maintenance-principal interpretation after the student asked to resume completion using the supplied guidelines. Real HTTP create/retrieve/replace/delete is implemented; immutable readings and analyst/device separation are retained. The brief does not explicitly identify this role/resource, so lecturer acceptance remains an interpretation question, not a missing uploaded document. See [maintenance contract](INSTALLATION_MAINTENANCE.md).

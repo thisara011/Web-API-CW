@@ -12,6 +12,7 @@ import { AuthenticationService } from './auth/service.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createHierarchyRouter } from './routes/hierarchy.js';
 import { createReadingRouter } from './routes/readings.js';
+import { createMaintenanceRouter } from './routes/maintenance.js';
 import { createSummaryRouter } from './routes/summaries.js';
 
 interface AppDependencies {
@@ -89,6 +90,7 @@ export function createApp({ database, logger, config, isShuttingDown = () => fal
 
   if (config && database.pool) {
     app.use('/auth', createAuthRouter(new AuthenticationService(database.pool, config)));
+    app.use(createMaintenanceRouter(database.pool, config));
     app.use(createReadingRouter(database.pool, config));
     app.use(createSummaryRouter(database.pool, config, now));
     app.use(createHierarchyRouter(database.pool, config));

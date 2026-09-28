@@ -35,6 +35,17 @@ describe('credentials and bearer tokens', () => {
     await expect(verifyToken(issued.accessToken, config)).resolves.toMatchObject({ kind: 'analyst', role: 'district', districtId: '22222222-2222-4222-8222-222222222222', scopes: ['geography:read', 'installation:read'] });
   });
 
+  it('issues a maintenance principal without analyst jurisdiction or installation ownership',async()=>{
+    const p={kind:'maintenance' as const,subject:'11111111-1111-4111-8111-111111111111',credentialVersion:1,scopes:['installation:manage']};
+    const token=await issueToken(p,config);await expect(verifyToken(token.accessToken,config)).resolves.toEqual(p);
+  });
+  it.each(['role','installation_id','province_id','district_id'])('rejects a maintenance token with foreign principal claim %s',async field=>{
+    const token=await new SignJWT({kind:'maintenance',cv:1,scope:'installation:manage',[field]:'11111111-1111-4111-8111-111111111111'})
+      .setProtectedHeader({alg:'HS256',typ:'JWT'}).setSubject('11111111-1111-4111-8111-111111111111').setIssuedAt().setExpirationTime('15m')
+      .setIssuer(config.JWT_ISSUER).setAudience(config.JWT_AUDIENCE).sign(new TextEncoder().encode(config.JWT_SECRET));
+    await expect(verifyToken(token,config)).rejects.toMatchObject({status:401});
+  });
+
   it('rejects a token signed with a different secret, issuer or audience', async () => {
     const token = await issueToken({ kind: 'installation', subject: '11111111-1111-4111-8111-111111111111', credentialVersion: 1, installationId: '11111111-1111-4111-8111-111111111111', scopes: ['readings:write'] }, config);
     const incompatible = parseEnv({ DATABASE_URL: 'postgresql://solar:password@localhost:5432/solar', JWT_SECRET: 'different-secret-with-more-than-thirty-two-chars', JWT_ISSUER: 'another-issuer', JWT_AUDIENCE: 'another-audience' });

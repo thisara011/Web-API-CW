@@ -5,7 +5,7 @@ const domainTables = ['provinces', 'districts', 'grid_substations', 'solar_insta
 
 export async function grantRuntimeAccess(
   pool: Pool,
-  { schema = 'solar', role }: { schema?: string; role: string },
+  { schema = 'solar', role, installationMaintenance = false }: { schema?: string; role: string; installationMaintenance?: boolean },
 ): Promise<void> {
   const namespace = applicationSchema(schema);
   const grantee = quoteIdentifier(role);
@@ -33,12 +33,13 @@ export async function grantRuntimeAccess(
 
     for (const table of [...domainTables, 'schema_migrations']) {
       const qualified = `${namespace}.${quoteIdentifier(table)}`;
-      const forbidden = table === 'schema_migrations'
+      const metadata = installationMaintenance && table === 'solar_installations';
+      const forbidden = metadata ? 'TRUNCATE,REFERENCES,TRIGGER' : table === 'schema_migrations'
         ? 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'
         : table === 'generation_readings'
           ? 'UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'
           : 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER';
-      const forbiddenColumns = table === 'schema_migrations'
+      const forbiddenColumns = metadata ? 'REFERENCES' : table === 'schema_migrations'
         ? 'SELECT,INSERT,UPDATE,REFERENCES'
         : table === 'generation_readings' ? 'UPDATE,REFERENCES' : 'INSERT,UPDATE,REFERENCES';
       const permission = await client.query<{ unsafe: boolean }>(
@@ -46,6 +47,14 @@ export async function grantRuntimeAccess(
           OR pg_catalog.has_any_column_privilege($1, $2, $4) AS unsafe`,
         [role, qualified, forbidden, forbiddenColumns],
       );
+      if (metadata) {
+        const columns = await client.query<{unsafe:boolean}>(`SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_attribute
+          WHERE attrelid=$2::regclass AND attnum>0 AND NOT attisdropped AND
+          ((attname <> ALL($3::text[]) AND pg_catalog.has_column_privilege($1,$2,attname,'INSERT')) OR
+           (attname <> ALL($4::text[]) AND pg_catalog.has_column_privilege($1,$2,attname,'UPDATE')))) AS unsafe`,
+          [role,qualified,['grid_substation_id','meter_id','site_label','capacity_kw','commissioned_date','is_active'],['site_label','capacity_kw','commissioned_date','is_active']]);
+        if (columns.rows[0]?.unsafe) throw new Error('Runtime role has unexpected installation column privileges');
+      }
       if (permission.rows[0]?.unsafe) {
         throw new Error(`Runtime role has unexpected privileges on ${table}; remove the grant before provisioning`);
       }
@@ -53,6 +62,9 @@ export async function grantRuntimeAccess(
     await client.query(`GRANT USAGE ON SCHEMA ${namespace} TO ${grantee}`);
     await client.query(`GRANT SELECT ON ${domainTables.map((table) => `${namespace}.${quoteIdentifier(table)}`).join(', ')} TO ${grantee}`);
     await client.query(`GRANT INSERT ON ${namespace}.generation_readings TO ${grantee}`);
+    if (installationMaintenance) {
+      await client.query(`GRANT INSERT (grid_substation_id,meter_id,site_label,capacity_kw,commissioned_date,is_active), UPDATE (site_label,capacity_kw,commissioned_date,is_active), DELETE ON ${namespace}.solar_installations TO ${grantee}`);
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');

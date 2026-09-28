@@ -33,9 +33,9 @@ Status key: **Verified locally** means repository evidence exists, not that a fi
 | A03 | Last-known-reading derived resource | B pp5–6 | Latest by observation timestamp; handles absent history | Implemented/tested: event-time ordering, late arrivals and empty-site 404 |
 | A04 | Per-installation readings subcollection and atomic read | B p5 | Historical page and Location target retrieval by authorized analyst | Implemented/tested: nested history page and canonical atomic Location retrieval |
 | A05 | Device ingestion creates a resource using correct method and headers | B p5; R p2 | POST returns 201, Location, JSON and validators | Implemented/tested: 201, JSON, Location, Content-Location, ETag and Last-Modified |
-| A06 | Full CRUD on an appropriate writable resource | B p5; R p3 | Agreed mutable resource; real create/read/update/delete tests | Open: D1 |
+| A06 | Full CRUD on an appropriate writable resource | B p5; R p3 | Agreed mutable resource; real create/read/update/delete tests | Implemented for installation metadata under documented D1 interpretation; lecturer acceptance unconfirmed |
 | A07 | Consistent nouns, lowercase/hyphens, plural collections | R p2; B p9 | OpenAPI path audit against model and guideline differences | Implemented noun/plural paths documented; root-prefix differences remain explicit |
-| A08 | Correct update/idempotency semantics | B p5; R p2 | PUT complete replacement if adopted; explicit partial-update contract; repeat-request checks | Open: D1 |
+| A08 | Correct update/idempotency semantics | B p5; R p2 | PUT complete replacement if adopted; explicit partial-update contract; repeat-request checks | Implemented for installation metadata under documented D1 interpretation; lecturer acceptance unconfirmed |
 | A09 | Deliberate 200, 201, 400, 404, 406 and 412 | B p9; R p2 | Positive and negative integration scenarios | Implemented/tested for current routes including 304/406/412; mutable CRUD remains D1 |
 | A10 | Location, ETag, Last-Modified and Content-Type | B p9; R p2 | Header assertions on applicable responses | Implemented: ETag on current business reads, Last-Modified where tracked; hierarchy directories omit date validators |
 | Q01 | Pagination with total count, next and previous links | B p5; R p3 | First/middle/final/empty page checks; filter-preserving links | Implemented/tested for histories and hierarchy directories: scoped count, stable pages and preserved links |
@@ -76,4 +76,6 @@ No planning artifact, passing local test or target band substitutes for these su
 
 Local completion evidence: [completion audit](evidence/COMPLETION_AUDIT.md), [sanitized release smoke](evidence/LOCAL_RELEASE_SMOKE.json), [deployment runbook](DEPLOYMENT.md) and [student submission checklist](SUBMISSION_CHECKLIST.md). These do not close A06/A08 or public submission gates.
 
-Azure evidence (25 September 2026): [Web App operations](AZURE_WEBAPP.md), public smoke and HTTP end-to-end evidence confirm operational deployment. Submission-time availability/freshness must be checked again. A06/A08 remain open pending the lecturer guidance document the student has offered to upload.
+Azure evidence (25 September 2026): [Web App operations](AZURE_WEBAPP.md), public smoke and HTTP end-to-end evidence confirm operational deployment. Submission-time availability/freshness must be checked again. A06/A08 remain open because the supplied brief and rubric do not reconcile full write-path CRUD with append-only readings. The student confirmed these are the complete guidance; no additional document is pending.
+
+Stage 7 implementation: [installation metadata maintenance](INSTALLATION_MAINTENANCE.md) supplies actual CRUD/PUT semantics with restricted permissions. This closes the implementation gap for the chosen interpretation; it does not assert that the lecturer has reconciled the brief/rubric wording.

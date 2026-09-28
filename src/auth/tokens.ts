@@ -4,6 +4,7 @@ import type { Environment } from '../config/env.js';
 import { ApiError } from '../http/errors.js';
 
 export type Principal =
+  | { kind: 'maintenance'; subject: string; credentialVersion: number; scopes: string[] }
   | { kind: 'analyst'; subject: string; credentialVersion: number; role: 'national' | 'provincial' | 'district'; provinceId: string | null; districtId: string | null; scopes: string[] }
   | { kind: 'installation'; subject: string; credentialVersion: number; installationId: string; scopes: string[] };
 
@@ -17,7 +18,7 @@ export async function issueToken(principal: Principal, config: Environment): Pro
   };
   if (principal.kind === 'analyst') {
     Object.assign(claims, { role: principal.role, province_id: principal.provinceId, district_id: principal.districtId });
-  } else Object.assign(claims, { installation_id: principal.installationId });
+  } else if (principal.kind === 'installation') Object.assign(claims, { installation_id: principal.installationId });
   const accessToken = await new SignJWT(claims)
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setSubject(principal.subject).setIssuer(config.JWT_ISSUER).setAudience(config.JWT_AUDIENCE)
@@ -32,7 +33,11 @@ export async function verifyToken(token: string, config: Environment): Promise<P
       requiredClaims: ['sub', 'iat', 'exp'], maxTokenAge: `${config.JWT_EXPIRES_IN_SECONDS}s`,
     });
     const scopes = typeof payload.scope === 'string' ? payload.scope.split(' ').filter(Boolean) : [];
-    if (!z.uuid().safeParse(payload.sub).success || typeof payload.sub !== 'string' || !Number.isInteger(payload.cv) || Number(payload.cv) < 1 || !['analyst', 'installation'].includes(String(payload.kind))) throw new Error('invalid claims');
+    if (!z.uuid().safeParse(payload.sub).success || typeof payload.sub !== 'string' || !Number.isInteger(payload.cv) || Number(payload.cv) < 1 || !['analyst', 'installation', 'maintenance'].includes(String(payload.kind))) throw new Error('invalid claims');
+    if (payload.kind === 'maintenance') {
+      if (payload.role !== undefined || payload.installation_id !== undefined || payload.province_id !== undefined || payload.district_id !== undefined) throw new Error('invalid maintenance claims');
+      return { kind: 'maintenance', subject: payload.sub, credentialVersion: payload.cv as number, scopes };
+    }
     if (payload.kind === 'installation') {
       if (payload.installation_id !== payload.sub) throw new Error('invalid installation claims');
       return { kind: 'installation', subject: payload.sub, credentialVersion: payload.cv as number, installationId: payload.installation_id, scopes };
