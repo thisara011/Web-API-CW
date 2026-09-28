@@ -1,0 +1,127 @@
+{
+  "verifiedAt": "2026-09-28T04:58:12.044Z",
+  "origin": "https://app-slsea-cw-ae65c5ba.azurewebsites.net",
+  "interpretation": "Separate maintenance principal and mutable installation metadata; lecturer acceptance unconfirmed",
+  "checks": [
+    {
+      "path": "/maintenance/installations",
+      "method": "GET",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "path": "/readings",
+      "method": "GET",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "path": "/maintenance/installations",
+      "method": "GET",
+      "status": 403,
+      "expected": 403
+    },
+    {
+      "path": "/installations?limit=1",
+      "method": "GET",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations?limit=1",
+      "method": "GET",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations",
+      "method": "POST",
+      "status": 201,
+      "expected": 201
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "GET",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "GET",
+      "status": 304,
+      "expected": 304
+    },
+    {
+      "path": "/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "GET",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "PUT",
+      "status": 428,
+      "expected": 428
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "PUT",
+      "status": 400,
+      "expected": 400
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "PUT",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "PUT",
+      "status": 412,
+      "expected": 412
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "PUT",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53",
+      "method": "GET",
+      "status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/maintenance/installations/10fb36d1-26c4-5270-a027-811c1c7c2a53",
+      "method": "DELETE",
+      "status": 409,
+      "expected": 409
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "DELETE",
+      "status": 204,
+      "expected": 204
+    },
+    {
+      "path": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+      "method": "DELETE",
+      "status": 404,
+      "expected": 404
+    },
+    {
+      "path": "/installations?limit=1",
+      "method": "GET",
+      "status": 200,
+      "expected": 200
+    }
+  ],
+  "inventoryBefore": 200,
+  "temporaryId": "bc26029d-fe7c-4971-abce-5b1890f36eba",
+  "location": "/maintenance/installations/bc26029d-fe7c-4971-abce-5b1890f36eba",
+  "temporaryDeleted": true,
+  "inventoryAfter": 200,
+  "complete": true
+}

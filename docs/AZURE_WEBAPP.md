@@ -76,3 +76,7 @@ The first command appends observations through the latest completed 15-minute sl
 Check all 25 district summaries after completion: `powerCoverageComplete` and `energyCoverageComplete` must be true, with no missing midnight baselines, invalid counters or stale installations. A single sample in the smoke output is insufficient to establish national coverage. Record the actual cutoff and verification time; the API's freshness window is 30 minutes, so repeat this explicit operation before a later demonstration. No recurring job is configured.
 
 Next coursework work: resolve the lecturer's mutable-resource CRUD interpretation, implement the agreed scope, and finish student-authored report, declaration and viva evidence. Recovery testing, load capacity and remote CI remain separate from this successful deployment verification.
+
+## Installation maintenance release (28 September 2026)
+
+The current release is `90de19f`, adding the protected installation metadata lifecycle after migration 004. Runtime grants additionally permit column-restricted metadata INSERT/UPDATE and DELETE of installations without history. Device credential hashes, user mutations and reading UPDATE/DELETE remain unavailable to the runtime. The earlier source hash and grant audit above describe the initial deployment. See [current maintenance operations/evidence](INSTALLATION_MAINTENANCE.md). Private maintenance credentials are in ignored mode-0600 `.env.azure-maintenance.json`.

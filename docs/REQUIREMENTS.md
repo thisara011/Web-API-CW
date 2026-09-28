@@ -7,8 +7,8 @@ Status key: **Verified locally** means repository evidence exists, not that a fi
 | Dimension | Marks | Evidence to produce | Stages | Status |
 | --- | ---: | --- | --- | --- |
 | Architecture and data model | 15 | Independent conceptual model; five-entity hierarchy plus User; append-only time series; meter attribute; separated read/write responsibilities | 0–3 | Verified locally; student explanation pending |
-| API design | 20 | Atomic/collection/composite/derived resources; scoped noun URIs; correct HTTP methods, statuses, validators and JSON | 4–8 | Implemented and verified for the current read/append surface; CRUD remains D1 |
-| Coverage | 15 | Entire required surface; analytical controls; agreed CRUD; working district summary | 4–8 | Read/append/summary coverage verified locally; CRUD open |
+| API design | 20 | Atomic/collection/composite/derived resources; scoped noun URIs; correct HTTP methods, statuses, validators and JSON | 4–8 | Implemented and verified for the current read/append surface; Metadata CRUD implemented under the documented D1 interpretation |
+| Coverage | 15 | Entire required surface; analytical controls; agreed CRUD; working district summary | 4–8 | Read/append/summary and maintenance CRUD verified locally and on Azure; D1 acceptance unconfirmed |
 | Implementation with generated code | 10 | Coherent code; actual review/repair records; prompt and AI-aid disclosure; student explanation | Every stage | Implementation, regression tests and review log maintained; student critique pending |
 | Functionality against seed data | 5 | Every endpoint exercised against valid seed plus deliberate edge cases | 3–10 | Seed integration tests and compiled local release rehearsal passed |
 | Deployment and operation | 10 | Public HTTPS, live Swagger, incremental history, shared repository | 1, 9–10 | Azure HTTPS, Swagger and restart persistence verified; repository sharing unverified |
@@ -36,7 +36,7 @@ Status key: **Verified locally** means repository evidence exists, not that a fi
 | A06 | Full CRUD on an appropriate writable resource | B p5; R p3 | Agreed mutable resource; real create/read/update/delete tests | Implemented for installation metadata under documented D1 interpretation; lecturer acceptance unconfirmed |
 | A07 | Consistent nouns, lowercase/hyphens, plural collections | R p2; B p9 | OpenAPI path audit against model and guideline differences | Implemented noun/plural paths documented; root-prefix differences remain explicit |
 | A08 | Correct update/idempotency semantics | B p5; R p2 | PUT complete replacement if adopted; explicit partial-update contract; repeat-request checks | Implemented for installation metadata under documented D1 interpretation; lecturer acceptance unconfirmed |
-| A09 | Deliberate 200, 201, 400, 404, 406 and 412 | B p9; R p2 | Positive and negative integration scenarios | Implemented/tested for current routes including 304/406/412; mutable CRUD remains D1 |
+| A09 | Deliberate 200, 201, 400, 404, 406 and 412 | B p9; R p2 | Positive and negative integration scenarios | Implemented/tested for current routes including 304/406/412; mutable Metadata CRUD implemented under the documented D1 interpretation |
 | A10 | Location, ETag, Last-Modified and Content-Type | B p9; R p2 | Header assertions on applicable responses | Implemented: ETag on current business reads, Last-Modified where tracked; hierarchy directories omit date validators |
 | Q01 | Pagination with total count, next and previous links | B p5; R p3 | First/middle/final/empty page checks; filter-preserving links | Implemented/tested for histories and hierarchy directories: scoped count, stable pages and preserved links |
 | Q02 | Filtering by province, district, substation and time | B p5; R p3 | Multi-installation analytical queries with authorized regional filters | Implemented/tested: intersected region/installation filters and half-open time bounds |

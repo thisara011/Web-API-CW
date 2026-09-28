@@ -1,0 +1,77 @@
+{
+  "verifiedAt": "2026-09-28T04:52:19.490Z",
+  "role": "slsea_runtime",
+  "columns": [
+    {
+      "column": "id",
+      "insert": false,
+      "update": false
+    },
+    {
+      "column": "grid_substation_id",
+      "insert": true,
+      "update": false
+    },
+    {
+      "column": "meter_id",
+      "insert": true,
+      "update": false
+    },
+    {
+      "column": "site_label",
+      "insert": true,
+      "update": true
+    },
+    {
+      "column": "capacity_kw",
+      "insert": true,
+      "update": true
+    },
+    {
+      "column": "commissioned_date",
+      "insert": true,
+      "update": true
+    },
+    {
+      "column": "credential_hash",
+      "insert": false,
+      "update": false
+    },
+    {
+      "column": "credential_version",
+      "insert": false,
+      "update": false
+    },
+    {
+      "column": "is_active",
+      "insert": true,
+      "update": true
+    },
+    {
+      "column": "created_at",
+      "insert": false,
+      "update": false
+    },
+    {
+      "column": "updated_at",
+      "insert": false,
+      "update": false
+    }
+  ],
+  "forbiddenTableMutations": [
+    {
+      "t": "generation_readings",
+      "mutation": false
+    },
+    {
+      "t": "users",
+      "mutation": false
+    }
+  ],
+  "readingsBeforeHttp": 738200,
+  "postHttpVerification": {
+    "verifiedAt": "2026-09-28T10:33:29.347Z",
+    "readings": 738200,
+    "installations": 200
+  }
+}

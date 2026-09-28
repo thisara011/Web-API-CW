@@ -77,3 +77,5 @@ The CI workflow now stages the release after its checks, runs `npm ci --omit=dev
 ### Executed release mode (25 September 2026)
 
 The deployed release used `node dist/cli/stage-release.js --azure-install`, with remote build/Oryx settings true. That mode stages a build hook to install locked production dependencies and verify imports on Azure Linux; it does not run TypeScript compilation remotely. The prebuilt CI mode described above retains false remote-build settings. See [actual deployment evidence and runbook](AZURE_WEBAPP.md).
+
+Maintenance increment (28 September 2026): release 90de19f is published and verified with full installation-metadata CRUD under the documented assessment interpretation, using a separate private principal and opt-in column grants. See [maintenance operations/evidence](INSTALLATION_MAINTENANCE.md). Remaining work: submission-time refresh, repository sharing, student-authored report/declaration, disclosure and viva; lecturer acceptance of D1 remains unconfirmed.

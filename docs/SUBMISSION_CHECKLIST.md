@@ -5,7 +5,7 @@ These are AI-assisted working notes, not report prose. The brief requires the st
 ## Remaining completion gates
 
 - [ ] Resolve D1 in PROJECT_PLAN.md: which mutable resource and principal satisfy full CRUD while readings remain immutable and analysts remain read-only?
-- [ ] Implement and verify that agreed HTTP CRUD path, including replacement, preconditions, repeated requests and deletion restrictions.
+- [x] Implement and verify installation metadata CRUD under the documented maintenance-role interpretation, including replacement, preconditions, repeated requests and history restrictions. Local and Azure evidence recorded; lecturer acceptance remains the preceding gate.
 - [x] Select hosting/account and budget; deploy Azure App Service and PostgreSQL. See AZURE_WEBAPP.md.
 - [x] Verify public HTTPS, live Swagger, private demonstration credentials and persistence after restart. See Azure HTTP evidence.
 - [ ] Verify current synthetic coverage immediately before the marking demonstration; a past successful check does not stay fresh indefinitely.

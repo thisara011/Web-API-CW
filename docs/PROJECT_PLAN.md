@@ -1,6 +1,6 @@
 # Project plan
 
-Prepared: 21 September 2026; updated: 25 September 2026. Status: Stages 1–6 and 8 implemented and locally verified; hierarchy/security completion audit and deployment preparation added. Azure public deployment and restart persistence are verified; fresh synthetic coverage was verified on 25 September 2026; Stage 7 mutable-resource clarification and submission work remain open. See the README and stage evidence for setup and results.
+Prepared: 21 September 2026; updated: 28 September 2026. Status: Stages 1–6 and 8 implemented and locally verified; hierarchy/security completion audit and deployment preparation added. Azure public deployment and restart persistence are verified; fresh synthetic coverage was verified on 25 September 2026; Stage 7 mutable-resource clarification and submission work remain open. See the README and stage evidence for setup and results.
 
 ## 1. Sources and scope
 
@@ -23,7 +23,7 @@ Aim for the First-band evidence in all eight rubric dimensions. The project is n
 | Backend stack | TypeScript, Express and PostgreSQL selected when the student requested completion of Stage 1 | Installed with locked dependencies; no stack is mandated by either PDF |
 | Deadline | Brief says to refer to LMS; actual date is unknown | Use dependency-ordered stages now; assign dates when supplied |
 | Design white paper | Local WSO2 paper found and read | Use as the likely reference; verify its edition with the student |
-| CRUD contradiction | Both supplied PDFs reread in full; they contain the unresolved requirements below | Core modeling, secure reads and append-only ingestion can proceed |
+| CRUD contradiction | Installation metadata maintenance implemented as an explicit project interpretation; lecturer acceptance unconfirmed | Full metadata CRUD works locally and remotely; measurements stay immutable |
 | Hosting | Azure App Service B1 and PostgreSQL 17/B1ms are deployed in Central India; managed-identity access and remote read/write/restart checks passed | Reviewed base estimate US$35.22/month; both resources billable. Dataset remains historical. See [Web App evidence](AZURE_WEBAPP.md) |
 | Collaborator | Module leader's GitHub username is unknown | Prepare repository and share only when the user supplies the recipient and authorizes the invitation |
 | Declaration | Signed declaration required; a completed signed artifact has not been supplied | Student must review and sign their declaration |
@@ -209,3 +209,5 @@ CRUD clarification update (25 September 2026): the student clarified that the pr
 Synthetic demo refresh (25 September 2026): 603,599 appended readings, total 738,200, cutoff 05:00 UTC. All 25 districts/200 installations had complete fresh power and energy coverage at verification. See [freshness evidence](evidence/AZURE_FRESHNESS.json). Refresh again before a later demonstration; no recurring generator is configured.
 
 Stage 7 implementation (28 September 2026): proceeded with the documented installation-metadata/maintenance-principal interpretation after the student asked to resume completion using the supplied guidelines. Real HTTP create/retrieve/replace/delete is implemented; immutable readings and analyst/device separation are retained. The brief does not explicitly identify this role/resource, so lecturer acceptance remains an interpretation question, not a missing uploaded document. See [maintenance contract](INSTALLATION_MAINTENANCE.md).
+
+Stage 7 public verification (28 September 2026): release 90de19f deployed successfully after migration 004 and opt-in column grants. Live maintenance create/GET/full PUT/DELETE, conditional and authorization checks passed; the temporary installation was deleted and inventory remained 200. Historical installation DELETE returned 409. See [remote evidence](evidence/AZURE_MAINTENANCE_HTTP.json).

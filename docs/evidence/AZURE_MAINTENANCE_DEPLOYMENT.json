@@ -1,0 +1,25 @@
+{
+  "verifiedAt": "2026-09-28T04:59:32.335645+00:00",
+  "origin": "https://app-slsea-cw-ae65c5ba.azurewebsites.net",
+  "sourceCommit": "90de19f",
+  "deployment": {
+    "complete": true,
+    "id": "f14bd32c-b0bc-4c44-9a0f-d5513ca774ec",
+    "status": 4
+  },
+  "artifactSha256": "9b3bf5d75b4e49fb5f7338c1b887956cc807c81ab0542a46ff99ca922dc837d7",
+  "migration": {
+    "applied": [
+      "004_installation_maintenance.sql"
+    ],
+    "alreadyApplied": [
+      "001_initial_schema.sql",
+      "002_seed_metadata.sql",
+      "003_hierarchy_modification_times.sql"
+    ]
+  },
+  "runtimeRole": "slsea_runtime",
+  "grantMode": "installationMaintenance=true; column-restricted metadata insert/update and history-restricted delete",
+  "privateMaintenanceCredentials": "Ignored .env.azure-maintenance.json; mode 0600; no password included",
+  "interpretation": "Installation metadata maintenance implements real CRUD without mutating readings; lecturer acceptance unconfirmed"
+}

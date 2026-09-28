@@ -31,7 +31,7 @@ node --env-file=.env.azure-admin dist/cli/migrate.js
 CREDENTIAL_ACTION=provision-maintenance node --env-file=.env.azure-maintenance-admin dist/cli/credentials.js
 ```
 
-The ignored private maintenance administrator environment supplies the existing owner connection, `MAINTENANCE_EMAIL` and a private `MAINTENANCE_PASSWORD` of at least 20 characters. Reprovisioning a maintenance email rotates its hash and credential version; an email belonging to another role is rejected. No public endpoint creates or promotes user accounts.
+Create the ignored private maintenance administrator environment if using that CLI example; it supplies the existing owner connection, `MAINTENANCE_EMAIL` and a private `MAINTENANCE_PASSWORD` of at least 20 characters. Reprovisioning a maintenance email rotates its hash and credential version; an email belonging to another role is rejected. No public endpoint creates or promotes user accounts.
 
 Runtime grants now have an explicit `ALLOW_INSTALLATION_MAINTENANCE=true` owner-command option. It adds installation DELETE plus INSERT on the six metadata columns and UPDATE on label/capacity/commissioned-date/active-status only. It grants no SQL access to modify installation IDs, parent/meter identity, credential hashes, user records or readings. Lifecycle triggers may update timestamps and invalidate old tokens. The default grant mode remains the original read/append surface and rejects unexpected metadata-write grants rather than silently broadening them.
 
@@ -40,3 +40,9 @@ Runtime grants now have an explicit `ALLOW_INSTALLATION_MAINTENANCE=true` owner-
 Real PostgreSQL tests use a dedicated runtime role with the exact column grants. They cover token-kind separation, analyst/device boundaries, canonical creation/GET, conditional GET, full replacement, missing/stale/weak preconditions, identical and concurrent PUTs, validation, retained-history deletion/commissioning restrictions, credential-write denial, active-status revocation and concurrent ingestion versus deletion.
 
 The current checks do not make the entire coursework complete. The lecturer may still require another interpretation of the write-path CRUD wording; record and explain this decision in the student's own report and viva.
+
+## Published Azure increment
+
+Release `90de19f` was deployed on 28 September 2026 after migration 004 and the opt-in runtime grants. The private login is in ignored `.env.azure-maintenance.json` (mode 0600). Use its email/password with principalType `maintenance` in live Swagger. The separate owner-only provisioning described above is already completed for this deployment; it is not a required repeat step.
+
+[Deployment evidence](evidence/AZURE_MAINTENANCE_DEPLOYMENT.json), [SQL grant audit](evidence/AZURE_MAINTENANCE_GRANTS.json) and [public CRUD evidence](evidence/AZURE_MAINTENANCE_HTTP.json) record the actual result. The live test created and deleted only a new temporary installation and confirmed the inventory stayed 200. Deleting an existing site with retained history returned 409. Previous evidence files describe the earlier release and its original narrower runtime grants.

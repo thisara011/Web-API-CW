@@ -10,3 +10,5 @@ Verified locally on 28 September 2026. This implements the documented maintenanc
 Actual failures and corrections: sandboxed HTTP tests initially failed with socket EPERM and passed outside the sandbox. The first integration run returned 500 for a retained-history DELETE because PostgreSQL ON DELETE RESTRICT used SQLSTATE 23001; mapped both 23001 and 23503 to the documented 409 conflict, then reran the complete integration suite successfully.
 
 The deployed Azure evidence is recorded separately after remote verification. Local checks alone do not establish successful publication or lecturer acceptance of the CRUD interpretation.
+
+Public verification also passed: [Azure HTTP CRUD](AZURE_MAINTENANCE_HTTP.json) and [restricted SQL grants](AZURE_MAINTENANCE_GRANTS.json). The new deployment completed successfully with status 4, and the test installation was deleted with seeded inventory unchanged.
