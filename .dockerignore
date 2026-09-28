@@ -14,3 +14,15 @@ docs
 .vscode
 .copilot-azure
 artifacts
+.azure
+private
+secrets
+scripts
+*.pem
+*.key
+*.pfx
+*.p12
+*.publishsettings
+*.PublishSettings
+*.pubxml.user
+.envrc

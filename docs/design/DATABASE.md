@@ -66,3 +66,5 @@ Local Compose creates `slsea_dev` as a development owner and initializes `slsea_
 ## Explanation checkpoint
 
 Be able to trace a reading's four parent relationships, explain why two installations can have observations at the same time while duplicates on one installation are rejected, demonstrate invalid role/jurisdiction combinations, and explain the difference between append-only application privileges and a trusted schema owner's administrative powers. Show why rerunning migrations is safe and why an edited applied migration is rejected.
+
+Maintenance extension: the default runtime grant mode remains read/append. The published metadata lifecycle uses explicitly opted-in column grants and a separate maintenance principal. See [current maintenance permissions](INSTALLATION_MAINTENANCE.md); credentials/user records and historical readings remain protected.

@@ -41,6 +41,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Check public repository files
+        run: npm run check:public
       - name: Install locked dependencies
         run: npm ci
       - name: Typecheck, test and build

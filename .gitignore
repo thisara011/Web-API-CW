@@ -9,3 +9,19 @@ coverage/
 .DS_Store
 .copilot-azure/
 artifacts/
+
+# Local credentials and publishing profiles; examples above stay public.
+.azure/
+private/
+secrets/
+*.pem
+*.key
+*.pfx
+*.p12
+*.publishsettings
+*.PublishSettings
+*.pubxml.user
+.envrc
+.idea/
+.vscode/*
+!.vscode/settings.json

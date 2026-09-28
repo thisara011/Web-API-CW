@@ -22,7 +22,7 @@ Burstable compute is suitable for a lightly used demonstration. Its sustained CP
 
 ## Estimate
 
-Live public USD retail rates for Central India were retrieved from the [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices). Exact returned meters and retrieval time are saved in [the price snapshot](evidence/AZURE_PRICE_SNAPSHOT.json). Calculations assume 730 compute hours per month and 32 storage billing units.
+Live public USD retail rates for Central India were retrieved from the [Azure Retail Prices API](https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices). Exact returned meters and retrieval time are saved in [the price snapshot](../evidence/AZURE_PRICE_SNAPSHOT.json). Calculations assume 730 compute hours per month and 32 storage billing units.
 
 | Item | Rate | Estimated monthly cost |
 | --- | --- | ---: |

@@ -44,4 +44,4 @@ The [sanitized smoke output](LOCAL_RELEASE_SMOKE.json) records timings and the s
 
 ## Remaining gates
 
-D1 still needs the lecturer's intended mutable-resource/principal interpretation, followed by actual HTTP CRUD implementation/tests. The public host, HTTPS, remote CI/container run, marker access and repository sharing still need real evidence. The student must write the report, review/sign the declaration, complete disclosure and attend the viva. See [submission checklist](../SUBMISSION_CHECKLIST.md) and [deployment runbook](../DEPLOYMENT.md).
+D1 still needs the lecturer's intended mutable-resource/principal interpretation, followed by actual HTTP CRUD implementation/tests. The public host, HTTPS, remote CI/container run, marker access and repository sharing still need real evidence. The student must write the report, review/sign the declaration, complete disclosure and attend the viva. See [submission checklist](../coursework/SUBMISSION_CHECKLIST.md) and [deployment runbook](../azure/DEPLOYMENT.md).

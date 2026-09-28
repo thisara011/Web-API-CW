@@ -25,7 +25,8 @@
     "smoke": "tsx --env-file-if-exists=.env src/cli/smoke.ts",
     "demo:reading": "tsx --env-file-if-exists=.env src/cli/demo-reading.ts",
     "demo:catch-up": "tsx --env-file-if-exists=.env src/cli/catch-up.ts",
-    "release:stage": "npm run build && node dist/cli/stage-release.js"
+    "release:stage": "npm run build && node dist/cli/stage-release.js",
+    "check:public": "node scripts/check-public-files.mjs"
   },
   "dependencies": {
     "@azure/identity": "^4.13.3",

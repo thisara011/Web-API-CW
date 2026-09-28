@@ -12,7 +12,7 @@ Resource group `rg-slsea-coursework`, Central India: plan `asp-slsea-coursework`
 
 The app uses `NODE|24-lts`, `node dist/server.js`, `HOST=0.0.0.0`, Azure's supplied `PORT`, Always On, HTTPS-only, minimum TLS 1.2 and `/health/ready`. FTP and basic publishing authentication are disabled. Its runtime uses `DATABASE_AUTH_MODE=managed-identity`, verified database TLS and a five-connection pool. No migration/owner settings are installed in the Web App.
 
-PostgreSQL role `slsea_runtime` maps to the exact Web App identity. It can SELECT the six domain tables and INSERT readings; it has no elevated role flags, memberships, schema/database CREATE, or history UPDATE/DELETE. [Grant audit](evidence/AZURE_RUNTIME_GRANTS.json). Public readiness and HTTP ingestion verify actual managed-identity connectivity, beyond the earlier administrator checks.
+PostgreSQL role `slsea_runtime` maps to the exact Web App identity. It can SELECT the six domain tables and INSERT readings; it has no elevated role flags, memberships, schema/database CREATE, or history UPDATE/DELETE. [Grant audit](../evidence/AZURE_RUNTIME_GRANTS.json). Public readiness and HTTP ingestion verify actual managed-identity connectivity, beyond the earlier administrator checks.
 
 The database firewall has 14 single-address rules: one developer address and 13 current Web App outbound addresses. No allow-all-Azure rule exists. Recheck outbound addresses after changing the plan or networking; the broader possible-address list is not automatically permitted.
 
@@ -29,7 +29,7 @@ Open these locally when needed; do not commit or paste their contents into repor
 
 ## Release procedure
 
-The deployed source is `ab0a7f752b66f2037ef718a992251261246369f0`. [Deployment evidence](evidence/AZURE_WEBAPP_VERIFICATION.json) records its ZIP hash and successful deployment ID.
+The deployed source is `ab0a7f752b66f2037ef718a992251261246369f0`. [Deployment evidence](../evidence/AZURE_WEBAPP_VERIFICATION.json) records its ZIP hash and successful deployment ID.
 
 This deployment used the explicit Azure installation mode:
 
@@ -54,15 +54,15 @@ Do not rerun migrations, seed or credential rotation as part of app startup. The
 
 ## Verification and limits
 
-[Read-only smoke evidence](evidence/AZURE_HTTP_SMOKE.json) covers readiness/liveness, OpenAPI, hierarchy counts, unauthorized access, history, ETag/304, stale If-Match/412 and summary requests. Swagger HTML also loaded successfully.
+[Read-only smoke evidence](../evidence/AZURE_HTTP_SMOKE.json) covers readiness/liveness, OpenAPI, hierarchy counts, unauthorized access, history, ETag/304, stale If-Match/412 and summary requests. Swagger HTML also loaded successfully.
 
-[End-to-end evidence](evidence/AZURE_HTTP_E2E.json) records provincial/district collection boundaries and hidden outside-scope resources, device read denial, wrong-device and analyst write denial, successful POST/201 with canonical Location/GET, duplicate/409 and count growth from 134,600 to 134,601. After an actual Web App restart, a fresh login retrieved the identical reading and unchanged count.
+[End-to-end evidence](../evidence/AZURE_HTTP_E2E.json) records provincial/district collection boundaries and hidden outside-scope resources, device read denial, wrong-device and analyst write denial, successful POST/201 with canonical Location/GET, duplicate/409 and count growth from 134,600 to 134,601. After an actual Web App restart, a fresh login retrieved the identical reading and unchanged count.
 
 The added reading is explicitly synthetic and historical: the next 15-minute night-time slot after the seed cutoff, with zero power and unchanged energy. At that initial deployment check, a summary correctly reported incomplete current power coverage. The later explicit refresh below fills the intervening synthetic history. Before a live marking demonstration, use the documented append-only synthetic catch-up procedure and check freshness; do not present seed history as current measurements.
 
 ## Refresh synthetic demonstration data
 
-Completed 25 September 2026: appended 603,599 synthetic readings through **05:00 UTC / 10:30 Asia/Colombo**, bringing the total to **738,200**. Public requests verified complete power and energy coverage across all 25 districts and 200 installations, with zero missing midnight baselines, stale sites or invalid counters. See [dated freshness evidence](evidence/AZURE_FRESHNESS.json). [History verification](evidence/AZURE_HISTORY_COVERAGE.json) also confirmed aligned, gap-free intervals for every installation and preservation of the earlier HTTP-created reading. This is a point-in-time demonstration result, not a recurring feed.
+Completed 25 September 2026: appended 603,599 synthetic readings through **05:00 UTC / 10:30 Asia/Colombo**, bringing the total to **738,200**. Public requests verified complete power and energy coverage across all 25 districts and 200 installations, with zero missing midnight baselines, stale sites or invalid counters. See [dated freshness evidence](../evidence/AZURE_FRESHNESS.json). [History verification](../evidence/AZURE_HISTORY_COVERAGE.json) also confirmed aligned, gap-free intervals for every installation and preservation of the earlier HTTP-created reading. This is a point-in-time demonstration result, not a recurring feed.
 
 From the project directory, use the separate Azure administrator configuration:
 
@@ -79,4 +79,4 @@ Next coursework work: resolve the lecturer's mutable-resource CRUD interpretatio
 
 ## Installation maintenance release (28 September 2026)
 
-The current release is `90de19f`, adding the protected installation metadata lifecycle after migration 004. Runtime grants additionally permit column-restricted metadata INSERT/UPDATE and DELETE of installations without history. Device credential hashes, user mutations and reading UPDATE/DELETE remain unavailable to the runtime. The earlier source hash and grant audit above describe the initial deployment. See [current maintenance operations/evidence](INSTALLATION_MAINTENANCE.md). Private maintenance credentials are in ignored mode-0600 `.env.azure-maintenance.json`.
+The current release is `90de19f`, adding the protected installation metadata lifecycle after migration 004. Runtime grants additionally permit column-restricted metadata INSERT/UPDATE and DELETE of installations without history. Device credential hashes, user mutations and reading UPDATE/DELETE remain unavailable to the runtime. The earlier source hash and grant audit above describe the initial deployment. See [current maintenance operations/evidence](../design/INSTALLATION_MAINTENANCE.md). Private maintenance credentials are in ignored mode-0600 `.env.azure-maintenance.json`.

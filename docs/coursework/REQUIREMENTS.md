@@ -74,8 +74,8 @@ These remain unchecked until actual evidence exists. See brief pp8–9 and rubri
 
 No planning artifact, passing local test or target band substitutes for these submission actions.
 
-Local completion evidence: [completion audit](evidence/COMPLETION_AUDIT.md), [sanitized release smoke](evidence/LOCAL_RELEASE_SMOKE.json), [deployment runbook](DEPLOYMENT.md) and [student submission checklist](SUBMISSION_CHECKLIST.md). These do not close A06/A08 or public submission gates.
+Local completion evidence: [completion audit](../evidence/COMPLETION_AUDIT.md), [sanitized release smoke](../evidence/LOCAL_RELEASE_SMOKE.json), [deployment runbook](../azure/DEPLOYMENT.md) and [student submission checklist](SUBMISSION_CHECKLIST.md). These do not close A06/A08 or public submission gates.
 
-Azure evidence (25 September 2026): [Web App operations](AZURE_WEBAPP.md), public smoke and HTTP end-to-end evidence confirm operational deployment. Submission-time availability/freshness must be checked again. A06/A08 remain open because the supplied brief and rubric do not reconcile full write-path CRUD with append-only readings. The student confirmed these are the complete guidance; no additional document is pending.
+Azure evidence (25 September 2026): [Web App operations](../azure/AZURE_WEBAPP.md), public smoke and HTTP end-to-end evidence confirm operational deployment. Submission-time availability/freshness must be checked again. A06/A08 remain open because the supplied brief and rubric do not reconcile full write-path CRUD with append-only readings. The student confirmed these are the complete guidance; no additional document is pending.
 
-Stage 7 implementation: [installation metadata maintenance](INSTALLATION_MAINTENANCE.md) supplies actual CRUD/PUT semantics with restricted permissions. This closes the implementation gap for the chosen interpretation; it does not assert that the lecturer has reconciled the brief/rubric wording.
+Stage 7 implementation: [installation metadata maintenance](../design/INSTALLATION_MAINTENANCE.md) supplies actual CRUD/PUT semantics with restricted permissions. This closes the implementation gap for the chosen interpretation; it does not assert that the lecturer has reconciled the brief/rubric wording.
